@@ -9,18 +9,6 @@
 /* ******* Gestion des matrices 4x4 ****** */
 
 void gl_M4_Id(M4* a) {
-	/*
-		GLint i, j;
-	#ifdef _OPENMP
-	#pragma omp simd collapse(2)
-	#endif
-		for (i = 0; i < 4; i++)
-			for (j = 0; j < 4; j++)
-				if (i == j)
-					a->m[i][j] = 1.0;
-				else
-					a->m[i][j] = 0.0;
-	*/
 	const M4 c = (M4){{
 		{1, 0, 0, 0},
 		{0, 1, 0, 0},
@@ -31,7 +19,7 @@ void gl_M4_Id(M4* a) {
 }
 
 GLint gl_M4_IsId(M4* a) {
-	
+
 	const M4 c = (M4){{
 		{1, 0, 0, 0},
 		{0, 1, 0, 0},
@@ -52,40 +40,32 @@ GLint gl_M4_IsId(M4* a) {
 	*/
 }
 
-void gl_M4_Mul(M4* c, M4* a, M4* b) {
-	GLint i, j, k;
-	GLfloat s;
-#ifdef _OPENMP
-#pragma omp simd
-#endif
-	for (i = 0; i < 4; i++)
-		for (j = 0; j < 4; j++) {
-			s = 0.0;
-			for (k = 0; k < 4; k++)
-				s += a->m[i][k] * b->m[k][j];
-			c->m[i][j] = s;
-		}
+void gl_M4_Mul(M4* restrict c, const M4* restrict a, const M4* restrict b) {
+	for (int i = 0; i < 4; ++i) {
+		const GLfloat ai0 = a->m[i][0];
+		const GLfloat ai1 = a->m[i][1];
+		const GLfloat ai2 = a->m[i][2];
+		const GLfloat ai3 = a->m[i][3];
+		c->m[i][0] = ai0 * b->m[0][0] + ai1 * b->m[1][0] + ai2 * b->m[2][0] + ai3 * b->m[3][0];
+		c->m[i][1] = ai0 * b->m[0][1] + ai1 * b->m[1][1] + ai2 * b->m[2][1] + ai3 * b->m[3][1];
+		c->m[i][2] = ai0 * b->m[0][2] + ai1 * b->m[1][2] + ai2 * b->m[2][2] + ai3 * b->m[3][2];
+		c->m[i][3] = ai0 * b->m[0][3] + ai1 * b->m[1][3] + ai2 * b->m[2][3] + ai3 * b->m[3][3];
+	}
 }
 
 /* c=c*a */
-void gl_M4_MulLeft(M4* c, M4* b) {
-	GLint i, j, k;
-	GLfloat s;
-	M4 a;
-
-	/*memcpy(&a, c, 16*sizeof(GLfloat));
-	 */
-	a = *c;
-#ifdef _OPENMP
-#pragma omp simd
-#endif
-	for (i = 0; i < 4; i++)
-		for (j = 0; j < 4; j++) {
-			s = 0.0;
-			for (k = 0; k < 4; k++)
-				s += a.m[i][k] * b->m[k][j];
-			c->m[i][j] = s;
-		}
+void gl_M4_MulLeft(M4* restrict c, const M4* restrict b) {
+	M4 a = *c;
+	for (int i = 0; i < 4; ++i) {
+		const GLfloat ai0 = a.m[i][0];
+		const GLfloat ai1 = a.m[i][1];
+		const GLfloat ai2 = a.m[i][2];
+		const GLfloat ai3 = a.m[i][3];
+		c->m[i][0] = ai0 * b->m[0][0] + ai1 * b->m[1][0] + ai2 * b->m[2][0] + ai3 * b->m[3][0];
+		c->m[i][1] = ai0 * b->m[0][1] + ai1 * b->m[1][1] + ai2 * b->m[2][1] + ai3 * b->m[3][1];
+		c->m[i][2] = ai0 * b->m[0][2] + ai1 * b->m[1][2] + ai2 * b->m[2][2] + ai3 * b->m[3][2];
+		c->m[i][3] = ai0 * b->m[0][3] + ai1 * b->m[1][3] + ai2 * b->m[2][3] + ai3 * b->m[3][3];
+	}
 }
 
 void gl_M4_Move(M4* a, M4* b) { memcpy(a, b, sizeof(M4)); }
@@ -142,9 +122,6 @@ void gl_M4_Transpose(M4* a, M4* b) {
 void gl_M4_InvOrtho(M4* a, M4 b) {
 	GLint i, j;
 	GLfloat s;
-#ifdef _OPENMP
-#pragma omp simd
-#endif
 	for (i = 0; i < 3; i++)
 		for (j = 0; j < 3; j++)
 			a->m[i][j] = b.m[j][i];
@@ -155,9 +132,6 @@ void gl_M4_InvOrtho(M4* a, M4 b) {
 
 	for (i = 0; i < 3; i++) {
 		s = 0;
-#ifdef _OPENMP
-#pragma omp simd
-#endif
 		for (j = 0; j < 3; j++)
 			s -= b.m[j][i] * b.m[j][3];
 		a->m[i][3] = s;
@@ -172,9 +146,6 @@ GLint Matrix_Inv(GLfloat* r, GLfloat* m, GLint n) {
 	GLfloat max, tmp, t;
 
 	/*  */
-#ifdef _OPENMP
-#pragma omp simd
-#endif
 	for (i = 0; i < n * n; i++)
 		r[i] = 0;
 	for (i = 0; i < n; i++)
@@ -196,9 +167,6 @@ GLint Matrix_Inv(GLfloat* r, GLfloat* m, GLint n) {
 
 		/* permutation des lignes j et k */
 		if (k != j) {
-#ifdef _OPENMP
-#pragma omp simd
-#endif
 			for (i = 0; i < n; i++) {
 				tmp = m[j * n + i];
 				m[j * n + i] = m[k * n + i];
@@ -212,9 +180,6 @@ GLint Matrix_Inv(GLfloat* r, GLfloat* m, GLint n) {
 
 		/* multiplication de la ligne j par 1/max */
 		max = 1 / max;
-#ifdef _OPENMP
-#pragma omp simd
-#endif
 		for (i = 0; i < n; i++) {
 			m[j * n + i] *= max;
 			r[j * n + i] *= max;
@@ -277,9 +242,6 @@ void gl_M3_Inv(M3* a, M3* m) {
 }
 
 /* vector arithmetic */
-
-
-
 
 /*
 int gl_V3_Norm(V3* a) {

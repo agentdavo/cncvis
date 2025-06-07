@@ -4,7 +4,6 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
-
 const GLubyte* license_string = (const GLubyte*)""
 												"Copyright notice:\n"
 												"\n"
@@ -168,8 +167,6 @@ const GLubyte* glGetString(GLenum name) {
 	return NULL;
 }
 
-
-
 void glGetIntegerv(GLint pname, GLint* params) {
 	GLint i;
 	GLContext* c = gl_get_context();
@@ -296,13 +293,11 @@ void glGetIntegerv(GLint pname, GLint* params) {
 		*params = 0;
 		break;
 	case GL_FOG_COLOR:
-		params[0] = 0;
-		params[1] = 0;
-		params[2] = 0;
-		params[3] = 0;
+		for (i = 0; i < 4; ++i)
+			params[i] = (GLint)(c->fog_color[i] * 255.0f);
 		break;
 	case GL_FOG_MODE:
-		*params = GL_EXP;
+		*params = c->fog_mode;
 		break;
 	case GL_LIGHTING:
 		*params = (c->lighting_enabled != 0);
@@ -357,6 +352,14 @@ void glGetIntegerv(GLint pname, GLint* params) {
 	case GL_CLIP_PLANE4:
 	case GL_CLIP_PLANE5:
 	case GL_SCISSOR_TEST:
+		params[0] = c->scissor_enabled;
+		break;
+	case GL_SCISSOR_BOX:
+		params[0] = c->scissor_x;
+		params[1] = c->scissor_y;
+		params[2] = c->scissor_width;
+		params[3] = c->scissor_height;
+		break;
 	case GL_UNPACK_SWAP_BYTES:
 	case GL_UNPACK_SKIP_ROWS:
 	case GL_UNPACK_SKIP_PIXELS:
@@ -486,7 +489,7 @@ void glGetIntegerv(GLint pname, GLint* params) {
 		*params = 0;
 #endif
 		break;
-	
+
 	case GL_IS_SPECULAR_ENABLED:
 		*params = c->zEnableSpecular;
 		break;
@@ -588,15 +591,17 @@ void glGetFloatv(GLint pname, GLfloat* v) {
 	case GL_GREEN_SCALE:
 	case GL_ALPHA_SCALE:
 	case GL_FOG_END:
+		*v = c->fog_end;
+		break;
 	case GL_FOG_DENSITY:
-		*v = 1;
+		*v = c->fog_density;
 		break;
 	case GL_BLUE_BIAS:
 	case GL_RED_BIAS:
 	case GL_GREEN_BIAS:
 	case GL_ALPHA_BIAS:
 	case GL_FOG_START:
-		*v = 0;
+		*v = c->fog_start;
 		break;
 	case GL_DEPTH_SCALE:
 		*v = 1;
@@ -652,10 +657,8 @@ void glGetFloatv(GLint pname, GLfloat* v) {
 		*v = c->zb->pointsize;
 		break;
 	case GL_FOG_COLOR:
-		v[0] = 0;
-		v[1] = 0;
-		v[2] = 0;
-		v[3] = 0;
+		for (i = 0; i < 4; ++i)
+			v[i] = c->fog_color[i];
 		break;
 	case GL_POINT_SIZE_GRANULARITY:
 		*v = 1.0f; /* if we ever implement AA'd points...*/
