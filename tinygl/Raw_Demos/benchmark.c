@@ -139,7 +139,7 @@ static void bench_icosahedron(int loops) {
     glBegin(GL_TRIANGLES);
     for (int f = 0; f < 60; f++) {
       const GLfloat *v = ico_vertices[ico_indices[f]];
-      glVertex3fv(v);
+      glVertex3fv((GLfloat *)v);
     }
     glEnd();
     glPopMatrix();
