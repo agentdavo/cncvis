@@ -37,15 +37,12 @@ void glopViewport(GLParam* p) {
 			gl_fatal_error("glViewport: size too small");
 		}
 
-		
 		c->viewport.xmin = xmin;
 		c->viewport.ymin = ymin;
 		c->viewport.xsize = xsize;
 		c->viewport.ysize = ysize;
 
-		
 		gl_eval_viewport();
-		
 	}
 }
 void glBlendFunc(GLenum sfactor, GLenum dfactor) {
@@ -108,6 +105,9 @@ void glopEnableDisable(GLParam* p) {
 	case GL_BLEND:
 		c->zb->enable_blend = v;
 		break;
+	case GL_FOG:
+		c->fog_enabled = v;
+		break;
 	case GL_NORMALIZE:
 		c->normalize_enabled = v;
 		break;
@@ -136,6 +136,9 @@ void glopEnableDisable(GLParam* p) {
 			c->offset_states |= TGL_OFFSET_LINE;
 		else
 			c->offset_states &= ~TGL_OFFSET_LINE;
+		break;
+	case GL_SCISSOR_TEST:
+		c->scissor_enabled = v;
 		break;
 	default:
 		if (code >= GL_LIGHT0 && code < GL_LIGHT0 + MAX_LIGHTS) {
@@ -192,11 +195,66 @@ void glopPolygonOffset(GLParam* p) {
 	c->offset_units = p[2].f;
 }
 
+void glopScissor(GLParam* p) {
+	GLContext* c = gl_get_context();
+	c->scissor_x = p[1].i;
+	c->scissor_y = p[2].i;
+	c->scissor_width = p[3].i;
+	c->scissor_height = p[4].i;
+}
+
+void glFogf(GLint pname, GLfloat param) {
+	GLContext* c = gl_get_context();
+	switch (pname) {
+	case GL_FOG_MODE:
+		c->fog_mode = (GLint)param;
+		break;
+	case GL_FOG_DENSITY:
+		c->fog_density = param;
+		break;
+	case GL_FOG_START:
+		c->fog_start = param;
+		break;
+	case GL_FOG_END:
+		c->fog_end = param;
+		break;
+	}
+}
+
+void glFogi(GLint pname, GLint param) { glFogf(pname, (GLfloat)param); }
+
+void glFogiv(GLint pname, const GLint* params) {
+	GLfloat tmp[4];
+	switch (pname) {
+	case GL_FOG_COLOR:
+		for (int i = 0; i < 4; ++i)
+			tmp[i] = (GLfloat)params[i] / 255.0f;
+		glFogfv(pname, tmp);
+		break;
+	default:
+		glFogf(pname, (GLfloat)params[0]);
+		break;
+	}
+}
+
+void glFogfv(GLint pname, const GLfloat* params) {
+	GLContext* c = gl_get_context();
+	switch (pname) {
+	case GL_FOG_COLOR:
+		for (int i = 0; i < 4; ++i)
+			c->fog_color[i] = params[i];
+		break;
+	default:
+		glFogf(pname, params[0]);
+		break;
+	}
+}
+
 GLenum glGetError() {
 #if TGL_FEATURE_ERROR_CHECK == 1
 	GLContext* c = gl_get_context();
 	GLenum eflag = c->error_flag;
-	if (eflag != GL_OUT_OF_MEMORY) 
+	if (eflag != GL_OUT_OF_MEMORY)
 		c->error_flag = GL_NO_ERROR;
 	return eflag;
 #else
@@ -232,7 +290,6 @@ void glReadBuffer(GLenum mode) {
 	c->readbuffer = mode;
 }
 
-
 void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void* data) {
 	GLContext* c = gl_get_context();
 #include "error_check.h"
@@ -257,3 +314,39 @@ void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format
 }
 
 void glFinish() { return; }
+
+/* --- OpenGL 1.1 stub implementations --- */
+void glClearIndex(GLfloat c) { (void)c; }
+
+void glClearStencil(GLint s) { (void)s; }
+
+void glClearAccum(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
+	(void)r;
+	(void)g;
+	(void)b;
+	(void)a;
+}
+
+void glAccum(GLenum op, GLfloat value) {
+	(void)op;
+	(void)value;
+}
+
+void glAlphaFunc(GLenum func, GLclampf ref) {
+	(void)func;
+	(void)ref;
+}
+
+void glStencilFunc(GLenum func, GLint ref, GLuint mask) {
+	(void)func;
+	(void)ref;
+	(void)mask;
+}
+
+void glStencilOp(GLenum fail, GLenum zfail, GLenum zpass) {
+	(void)fail;
+	(void)zfail;
+	(void)zpass;
+}
+
+void glStencilMask(GLuint mask) { (void)mask; }
