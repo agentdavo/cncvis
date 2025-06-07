@@ -1,5 +1,23 @@
 #include "zgl.h"
+#include <math.h>
 #include <string.h>
+
+static GLfloat compute_fog_factor(GLContext* c, GLVertex* v) {
+	GLfloat d = (v->pc.Z / v->pc.W) * 0.5f + 0.5f;
+	GLfloat f = 1.0f;
+	switch (c->fog_mode) {
+	case GL_EXP:
+		f = expf(-c->fog_density * d);
+		break;
+	case GL_EXP2:
+		f = expf(-c->fog_density * d * d);
+		break;
+	default:
+		f = (c->fog_end - d) / (c->fog_end - c->fog_start);
+		break;
+	}
+	return clampf(f, 0.0f, 1.0f);
+}
 void glopNormal(GLParam* p) {
 	V3 v;
 	GLContext* c = gl_get_context();
@@ -55,7 +73,7 @@ void glopBegin(GLParam* p) {
 #define ERROR_FLAG GL_INVALID_OPERATION
 #include "error_check.h"
 #else
-	
+
 #endif
 		type = p[1].i;
 	c->begin_type = type;
@@ -89,12 +107,12 @@ void glopBegin(GLParam* p) {
 
 		c->matrix_model_projection_updated = 0;
 	}
-	/*  viewport- this is now updated on a glViewport call. 
+	/*  viewport- this is now updated on a glViewport call.
 	if (c->viewport.updated) {
 		gl_eval_viewport(c);
 		c->viewport.updated = 0;
 	}
-	 triangle drawing functions 
+	 triangle drawing functions
 	*/
 #if TGL_FEATURE_ALT_RENDERMODES == 1
 	if (c->render_mode == GL_SELECT) {
@@ -146,8 +164,8 @@ static void gl_transform_to_viewport_vertex_c(GLVertex* v) {
 	v->zp.b = (GLint)(v->color.v[2] * COLOR_CORRECTED_MULT_MASK + COLOR_MIN_MULT) & COLOR_MASK;
 
 	if (c->texture_2d_enabled) {
-		v->zp.s = (GLint)(v->tex_coord.X * (ZB_POINT_S_MAX - ZB_POINT_S_MIN) + ZB_POINT_S_MIN); 
-		v->zp.t = (GLint)(v->tex_coord.Y * (ZB_POINT_T_MAX - ZB_POINT_T_MIN) + ZB_POINT_T_MIN); 
+		v->zp.s = (GLint)(v->tex_coord.X * (ZB_POINT_S_MAX - ZB_POINT_S_MIN) + ZB_POINT_S_MIN);
+		v->zp.t = (GLint)(v->tex_coord.Y * (ZB_POINT_T_MAX - ZB_POINT_T_MIN) + ZB_POINT_T_MIN);
 	}
 }
 
@@ -212,7 +230,7 @@ void glopVertex(GLParam* p) {
 #define ERROR_FLAG GL_INVALID_OPERATION
 #include "error_check.h"
 #else
-	
+
 #endif
 
 		n = c->vertex_n;
@@ -236,9 +254,14 @@ void glopVertex(GLParam* p) {
 	if (c->lighting_enabled) {
 		gl_shade_vertex(v);
 #include "error_check.h"
-		
+
 	} else {
 		v->color = c->current_color;
+	}
+	if (c->fog_enabled) {
+		GLfloat f = compute_fog_factor(c, v);
+		for (i = 0; i < 3; ++i)
+			v->color.v[i] = v->color.v[i] * f + c->fog_color[i] * (1.0f - f);
 	}
 	/* tex coords */
 #if TGL_OPTIMIZATION_HINT_BRANCH_COST < 1
@@ -365,11 +388,9 @@ void glopEnd(GLParam* param) {
 #define ERROR_FLAG GL_INVALID_OPERATION
 #include "error_check.h"
 #else
-	
+
 	/* Assume it went alright.*/
 #endif
-
-
 
 #if TGL_FEATURE_GL_POLYGON == 1
 		if (c->begin_type == GL_LINE_LOOP) {

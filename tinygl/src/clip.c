@@ -1,5 +1,6 @@
 #include "msghandling.h"
 #include "zgl.h"
+#include <math.h>
 /* fill triangle profile */
 /* #define PROFILE */
 
@@ -27,12 +28,10 @@ static void gl_transform_to_viewport_clip_c(GLVertex* v) { /* MARK: NOT_INLINED_
 	/* texture */
 
 	if (c->texture_2d_enabled) {
-		v->zp.s = (GLint)(v->tex_coord.X * (ZB_POINT_S_MAX - ZB_POINT_S_MIN) + ZB_POINT_S_MIN); 
-		v->zp.t = (GLint)(v->tex_coord.Y * (ZB_POINT_T_MAX - ZB_POINT_T_MIN) + ZB_POINT_T_MIN); 
+		v->zp.s = (GLint)(v->tex_coord.X * (ZB_POINT_S_MAX - ZB_POINT_S_MIN) + ZB_POINT_S_MIN);
+		v->zp.t = (GLint)(v->tex_coord.Y * (ZB_POINT_T_MAX - ZB_POINT_T_MIN) + ZB_POINT_T_MIN);
 	}
 }
-
-
 
 #define clip_funcdef(name, sign, dir, dir1, dir2)                                                                                                              \
 	static GLfloat name(V4* c, V4* a, V4* b) {                                                                                                                 \
@@ -59,12 +58,12 @@ clip_funcdef(clip_xmin, -, X, Y, Z)
 		clip_funcdef(clip_ymin, -, Y, X, Z)
 
 			clip_funcdef(clip_ymax, +, Y, X, Z)
-			
+
 				clip_funcdef(clip_zmin, -, Z, X, Y)
 
 					clip_funcdef(clip_zmax, +, Z, X, Y)
 
-static GLfloat (*clip_proc[6])(V4*, V4*, V4*) = {clip_xmin, clip_xmax, clip_ymin, clip_ymax, clip_zmin, clip_zmax};
+						static GLfloat (*clip_proc[6])(V4*, V4*, V4*) = {clip_xmin, clip_xmax, clip_ymin, clip_ymax, clip_zmin, clip_zmax};
 /* point */
 #if TGL_FEATURE_ALT_RENDERMODES == 1
 static void gl_add_select1(GLint z1, GLint z2, GLint z3) {
@@ -107,15 +106,12 @@ void gl_draw_point(GLVertex* p0) {
  * Line Clipping
  */
 
-static void GLinterpolate(GLVertex* q, GLVertex* p0, GLVertex* p1, GLfloat t) { 
+static void GLinterpolate(GLVertex* q, GLVertex* p0, GLVertex* p1, GLfloat t) {
 	GLint i;
 	q->pc.X = p0->pc.X + (p1->pc.X - p0->pc.X) * t;
 	q->pc.Y = p0->pc.Y + (p1->pc.Y - p0->pc.Y) * t;
 	q->pc.Z = p0->pc.Z + (p1->pc.Z - p0->pc.Z) * t;
 	q->pc.W = p0->pc.W + (p1->pc.W - p0->pc.W) * t;
-#ifdef _OPENMP
-#pragma omp simd
-#endif
 	for (i = 0; i < 3; i++)
 		q->color.v[i] = p0->color.v[i] + (p1->color.v[i] - p0->color.v[i]) * t;
 }
@@ -203,12 +199,12 @@ void gl_draw_line(GLVertex* p1, GLVertex* p2) {
 	}
 }
 
-
-
 /*Triangles*/
 
-static void updateTmp(GLVertex* q, GLVertex* p0, GLVertex* p1, GLfloat t) { 
+static void updateTmp(GLVertex* q, GLVertex* p0, GLVertex* p1, GLfloat t) {
+#if TGL_OPTIMIZATION_HINT_BRANCH_COST < 1
 	GLContext* c = gl_get_context();
+#endif
 	{
 
 		q->color.v[0] = p0->color.v[0] + (p1->color.v[0] - p0->color.v[0]) * t;
@@ -229,7 +225,7 @@ static void updateTmp(GLVertex* q, GLVertex* p0, GLVertex* p1, GLfloat t) {
 		gl_transform_to_viewport_clip_c(q);
 }
 
-static void gl_draw_triangle_clip(GLVertex* p0, GLVertex* p1, GLVertex* p2, GLint clip_bit); 
+static void gl_draw_triangle_clip(GLVertex* p0, GLVertex* p1, GLVertex* p2, GLint clip_bit);
 
 void gl_draw_triangle(GLVertex* p0, GLVertex* p1, GLVertex* p2) {
 	GLContext* c = gl_get_context();
@@ -246,11 +242,11 @@ void gl_draw_triangle(GLVertex* p0, GLVertex* p1, GLVertex* p2) {
 		GLfloat norm;
 		norm = (GLfloat)(p1->zp.x - p0->zp.x) * (GLfloat)(p2->zp.y - p0->zp.y) - (GLfloat)(p2->zp.x - p0->zp.x) * (GLfloat)(p1->zp.y - p0->zp.y);
 
-		if (norm == 0) 
+		if (norm == 0)
 			return;
 
 		front = norm < 0.0;
-		front = front ^ c->current_front_face; 
+		front = front ^ c->current_front_face;
 
 		/* back face culling */
 		if (c->cull_face_enabled) {
@@ -283,9 +279,9 @@ void gl_draw_triangle(GLVertex* p0, GLVertex* p1, GLVertex* p2) {
 }
 
 static void gl_draw_triangle_clip(GLVertex* p0, GLVertex* p1, GLVertex* p2, GLint clip_bit) {
-	
+
 	GLint co, c_and, co1, cc[3], edge_flag_tmp, clip_mask;
-	
+
 	GLVertex* q[3];
 
 	cc[0] = p0->clip_code;
@@ -396,8 +392,29 @@ int count_triangles, count_triangles_textured, count_pixels;
 #endif
 
 /* see vertex.c to see how the draw functions are assigned.*/
-void gl_draw_triangle_fill(GLVertex* p0, GLVertex* p1, GLVertex* p2) { 
+void gl_draw_triangle_fill(GLVertex* p0, GLVertex* p1, GLVertex* p2) {
 	GLContext* c = gl_get_context();
+	ZBufferPoint p0z = p0->zp, p1z = p1->zp, p2z = p2->zp;
+	if (c->offset_states & TGL_OFFSET_FILL) {
+		float dx1 = (float)(p1z.x - p0z.x);
+		float dy1 = (float)(p1z.y - p0z.y);
+		float dz1 = (float)(p1z.z - p0z.z);
+		float dx2 = (float)(p2z.x - p0z.x);
+		float dy2 = (float)(p2z.y - p0z.y);
+		float dz2 = (float)(p2z.z - p0z.z);
+		float nx = dy1 * dz2 - dz1 * dy2;
+		float ny = dz1 * dx2 - dx1 * dz2;
+		float nz = dx1 * dy2 - dy1 * dx2;
+		float inv_nz = nz != 0.0f ? 1.0f / nz : 0.0f;
+		float dzdx = fabsf(nx * inv_nz);
+		float dzdy = fabsf(ny * inv_nz);
+		float slope = dzdx > dzdy ? dzdx : dzdy;
+		float offset = c->offset_units + c->offset_factor * slope;
+		GLint offs = (GLint)(offset * (1 << ZB_POINT_Z_FRAC_BITS));
+		p0z.z += offs;
+		p1z.z += offs;
+		p2z.z += offs;
+	}
 	if (c->texture_2d_enabled) {
 		/* if(c->current_texture)*/
 #if TGL_FEATURE_LIT_TEXTURES == 1
@@ -415,29 +432,29 @@ void gl_draw_triangle_fill(GLVertex* p0, GLVertex* p1, GLVertex* p2) {
 		ZB_setTexture(c->zb, c->current_texture->images[0].pixmap);
 #if TGL_FEATURE_BLEND == 1
 		if (c->zb->enable_blend)
-			ZB_fillTriangleMappingPerspective(c->zb, &p0->zp, &p1->zp, &p2->zp);
+			ZB_fillTriangleMappingPerspective(c->zb, &p0z, &p1z, &p2z);
 		else
-			ZB_fillTriangleMappingPerspectiveNOBLEND(c->zb, &p0->zp, &p1->zp, &p2->zp);
+			ZB_fillTriangleMappingPerspectiveNOBLEND(c->zb, &p0z, &p1z, &p2z);
 #else
-		ZB_fillTriangleMappingPerspectiveNOBLEND(c->zb, &p0->zp, &p1->zp, &p2->zp);
+		ZB_fillTriangleMappingPerspectiveNOBLEND(c->zb, &p0z, &p1z, &p2z);
 #endif
 	} else if (c->current_shade_model == GL_SMOOTH) {
 #if TGL_FEATURE_BLEND == 1
 		if (c->zb->enable_blend)
-			ZB_fillTriangleSmooth(c->zb, &p0->zp, &p1->zp, &p2->zp);
+			ZB_fillTriangleSmooth(c->zb, &p0z, &p1z, &p2z);
 		else
-			ZB_fillTriangleSmoothNOBLEND(c->zb, &p0->zp, &p1->zp, &p2->zp);
+			ZB_fillTriangleSmoothNOBLEND(c->zb, &p0z, &p1z, &p2z);
 #else
-		ZB_fillTriangleSmoothNOBLEND(c->zb, &p0->zp, &p1->zp, &p2->zp);
+		ZB_fillTriangleSmoothNOBLEND(c->zb, &p0z, &p1z, &p2z);
 #endif
 	} else {
 #if TGL_FEATURE_BLEND == 1
 		if (c->zb->enable_blend)
-			ZB_fillTriangleFlat(c->zb, &p0->zp, &p1->zp, &p2->zp);
+			ZB_fillTriangleFlat(c->zb, &p0z, &p1z, &p2z);
 		else
-			ZB_fillTriangleFlatNOBLEND(c->zb, &p0->zp, &p1->zp, &p2->zp);
+			ZB_fillTriangleFlatNOBLEND(c->zb, &p0z, &p1z, &p2z);
 #else
-		ZB_fillTriangleFlatNOBLEND(c->zb, &p0->zp, &p1->zp, &p2->zp);
+		ZB_fillTriangleFlatNOBLEND(c->zb, &p0z, &p1z, &p2z);
 #endif
 	}
 }
@@ -446,30 +463,44 @@ void gl_draw_triangle_fill(GLVertex* p0, GLVertex* p1, GLVertex* p2) {
 
 void gl_draw_triangle_line(GLVertex* p0, GLVertex* p1, GLVertex* p2) {
 	GLContext* c = gl_get_context();
+	ZBufferPoint p0z = p0->zp, p1z = p1->zp, p2z = p2->zp;
+	if (c->offset_states & TGL_OFFSET_LINE) {
+		GLint offs = (GLint)(c->offset_units * (1 << ZB_POINT_Z_FRAC_BITS));
+		p0z.z += offs;
+		p1z.z += offs;
+		p2z.z += offs;
+	}
 	if (c->zb->depth_test) {
 		if (p0->edge_flag)
-			ZB_line_z(c->zb, &p0->zp, &p1->zp);
+			ZB_line_z(c->zb, &p0z, &p1z);
 		if (p1->edge_flag)
-			ZB_line_z(c->zb, &p1->zp, &p2->zp);
+			ZB_line_z(c->zb, &p1z, &p2z);
 		if (p2->edge_flag)
-			ZB_line_z(c->zb, &p2->zp, &p0->zp);
+			ZB_line_z(c->zb, &p2z, &p0z);
 	} else {
 		if (p0->edge_flag)
-			ZB_line(c->zb, &p0->zp, &p1->zp);
+			ZB_line(c->zb, &p0z, &p1z);
 		if (p1->edge_flag)
-			ZB_line(c->zb, &p1->zp, &p2->zp);
+			ZB_line(c->zb, &p1z, &p2z);
 		if (p2->edge_flag)
-			ZB_line(c->zb, &p2->zp, &p0->zp);
+			ZB_line(c->zb, &p2z, &p0z);
 	}
 }
 
 /* Render a clipped triangle in point mode */
 void gl_draw_triangle_point(GLVertex* p0, GLVertex* p1, GLVertex* p2) {
 	GLContext* c = gl_get_context();
+	ZBufferPoint p0z = p0->zp, p1z = p1->zp, p2z = p2->zp;
+	if (c->offset_states & TGL_OFFSET_POINT) {
+		GLint offs = (GLint)(c->offset_units * (1 << ZB_POINT_Z_FRAC_BITS));
+		p0z.z += offs;
+		p1z.z += offs;
+		p2z.z += offs;
+	}
 	if (p0->edge_flag)
-		ZB_plot(c->zb, &p0->zp);
+		ZB_plot(c->zb, &p0z);
 	if (p1->edge_flag)
-		ZB_plot(c->zb, &p1->zp);
+		ZB_plot(c->zb, &p1z);
 	if (p2->edge_flag)
-		ZB_plot(c->zb, &p2->zp);
+		ZB_plot(c->zb, &p2z);
 }

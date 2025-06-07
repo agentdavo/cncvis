@@ -221,7 +221,7 @@ void glBegin(GLint mode) {
 	p[0].op = OP_Begin;
 	p[1].i = mode;
 #if TGL_FEATURE_ERROR_CHECK == 1
-	
+
 	if (mode != GL_POINTS && mode != GL_LINES && mode != GL_LINE_LOOP && mode != GL_LINE_STRIP &&
 #if TGL_FEATURE_GL_POLYGON == 1
 		mode != GL_POLYGON &&
@@ -344,6 +344,18 @@ void glViewport(GLint x, GLint y, GLint width, GLint height) {
 	gl_add_op(p);
 }
 
+void glScissor(GLint x, GLint y, GLsizei width, GLsizei height) {
+	GLParam p[5];
+#include "error_check_no_context.h"
+	p[0].op = OP_Scissor;
+	p[1].i = x;
+	p[2].i = y;
+	p[3].i = width;
+	p[4].i = height;
+
+	gl_add_op(p);
+}
+
 void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearv, GLfloat farv) {
 	GLParam p[7];
 #include "error_check_no_context.h"
@@ -358,8 +370,7 @@ void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat
 	gl_add_op(p);
 }
 
-void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearv, GLfloat farv)
-{
+void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat nearv, GLfloat farv) {
 	GLParam p[7];
 #include "error_check_no_context.h"
 	p[0].op = OP_Ortho;
@@ -390,7 +401,7 @@ void glMaterialfv(GLint mode, GLint type, GLfloat* v) {
 		p[0].op = OP_Material;
 	p[1].i = mode;
 	p[2].i = type;
-	n = 4;  /* This appears to be a hack... to avoid a jump instruction? What the hell?*/
+	n = 4; /* This appears to be a hack... to avoid a jump instruction? What the hell?*/
 	if (type == GL_SHININESS)
 		n = 1;
 	for (i = 0; i < n; i++)
@@ -555,30 +566,11 @@ void glBindTexture(GLint target, GLint texture) {
 void glTexEnvi(GLint target, GLint pname, GLint param) {
 
 #include "error_check_no_context.h"
-
-
-
-
-
-
-
-
-
 }
 
 void glTexParameteri(GLint target, GLint pname, GLint param) {
 
 #include "error_check_no_context.h"
-
-
-
-
-
-
-
-
-
-
 }
 
 /*
@@ -647,8 +639,7 @@ void glCallList(GLuint list) {
 
 	gl_add_op(p);
 }
-void glFlush(void) { /* nothing to do */
-}
+void glFlush(void) { /* nothing to do */ }
 
 void glHint(GLint target, GLint mode) {
 #include "error_check_no_context.h"
