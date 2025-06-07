@@ -6,6 +6,8 @@ individual parts and draws them using **TinyGL**. The project is self
 contained – TinyGL, a simple STL loader and the Mini-XML parser are
 included in subdirectories.
 
+![Alt text](frame.png "a title")
+
 ## Features
 
 - **Hierarchical assemblies** – build kinematic chains from movable
