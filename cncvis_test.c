@@ -68,6 +68,5 @@ int main(void) {
   test_init_and_motion();
   test_reload_config();
   test_orbit_video();
-  cncvis_cleanup();
   return 0;
 }
