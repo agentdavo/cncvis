@@ -108,16 +108,29 @@ void ucncSetAllAssembliesToHome(ucncAssembly *assembly) {
 
 // Set the dimensions of the TinyGL Z-buffer and return width/height
 void ucncSetZBufferDimensions(int width, int height) {
+    // Ensure width is a multiple of 4 (TinyGL requirement)
+    if (width % 4 != 0) {
+        int new_width = ((width + 3) / 4) * 4;
+        fprintf(stderr, "Warning: Framebuffer width %d is not a multiple of 4, adjusting to %d\n",
+                width, new_width);
+        width = new_width;
+    }
 
-  if (globalFramebuffer) {
-    ZB_close(globalFramebuffer);
-  }
-  globalFramebuffer = ZB_open(width, height, ZB_MODE_RGBA, 0);
-  if (!globalFramebuffer) {
-    fprintf(stderr, "Failed to initialize Z-buffer with dimensions %d x %d.\n",
-            width, height);
-    return;
-  }
+    if (globalFramebuffer) {
+        ZB_close(globalFramebuffer);
+    }
+    globalFramebuffer = ZB_open(width, height, ZB_MODE_RGBA, 0);
+    if (!globalFramebuffer) {
+        fprintf(stderr, "Failed to initialize Z-buffer with dimensions %d x %d.\n",
+                width, height);
+        return;
+    }
+    printf("ucncSetZBufferDimensions: Initialized framebuffer with size: %d x %d\n", 
+           globalFramebuffer->xsize, globalFramebuffer->ysize);
+    if (globalFramebuffer->xsize != width || globalFramebuffer->ysize != height) {
+        fprintf(stderr, "Framebuffer size mismatch: expected %d x %d, got %d x %d\n",
+                width, height, globalFramebuffer->xsize, globalFramebuffer->ysize);
+    }
 }
 
 // Expose Z-buffer output for external use
