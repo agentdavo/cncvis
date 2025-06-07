@@ -6,7 +6,7 @@
 Enables setting the error flags when there's an error, so you can check it with glGetError
 Disabling this has slight performance gains.
 */
-#define TGL_FEATURE_ERROR_CHECK 0
+#define TGL_FEATURE_ERROR_CHECK 1
 /*
 Strict out-of-memory checking. All OpenGL function calls are invalidated (ALL OF THEM) if a GL_OUT_OF_MEMORY error occurs.
 This means that TinyGL has to constantly check all gl_malloc() attempts for errors and the state of the error state variable.
@@ -79,7 +79,7 @@ the maximum number of vertices in a polygon is defined in zgl.h
 
 #define TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D 1
 
-#define TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER 0
+#define TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER 1
 
 /*
 !!!!!WARNING!!!!!
@@ -89,7 +89,7 @@ Disabled by default for compatibility- you should only enable this if you KNOW t
 returns 16-byte aligned pointers.
 */
 
-#define TGL_FEATURE_ALIGNAS 0
+#define TGL_FEATURE_ALIGNAS 1
 /*
 Optimization hint- cost of branching.
 0- branching has zero cost, avoid extraneous code.

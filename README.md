@@ -42,6 +42,22 @@ cmake --build build
 
 This produces a static library and a few TinyGL based demos under `build/`.
 
+## Running tests
+
+After building the project you can run the tests with CTest:
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+The TinyGL gears demo outputs `build/tinygl/Raw_Demos/render.png`. This image is
+compared against `tinygl/Raw_Demos/gears_orig.png`. If the comparison fails,
+replace `gears_orig.png` with the newly generated render to update the
+reference.
+
+The `test_orbit_video` test also produces an `orbit.mp4` video in the project
+root using `ffmpeg`. This shows the camera orbiting the loaded machine.
+
 ## Configuration files
 
 Each machine is described by an XML file. Assemblies form a tree where

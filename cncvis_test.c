@@ -2,6 +2,7 @@
 #include "assembly.h"
 #include "utils.h"
 #include <assert.h>
+#include <math.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
@@ -10,6 +11,20 @@ ucncAssembly *globalScene = NULL;
 ucncCamera *globalCamera = NULL;
 ucncLight **globalLights = NULL;
 int globalLightCount = 0;
+
+static void orbit_camera_z(float delta_deg) {
+  static float angle = 0.0f;
+  angle += delta_deg;
+  float rad = angle * (float)M_PI / 180.0f;
+  float radius = sqrtf((globalCamera->positionX - globalCamera->targetX) *
+                           (globalCamera->positionX - globalCamera->targetX) +
+                       (globalCamera->positionY - globalCamera->targetY) *
+                           (globalCamera->positionY - globalCamera->targetY));
+  globalCamera->positionX = globalCamera->targetX + radius * cosf(rad);
+  globalCamera->positionY = globalCamera->targetY + radius * sinf(rad);
+  globalCamera->yaw = angle;
+  update_camera_matrix(globalCamera);
+}
 
 static void test_init_and_motion(void) {
   int rc = cncvis_init("machines/meca500/config.xml");
@@ -55,7 +70,7 @@ static void test_orbit_video(void) {
     snprintf(fname, sizeof(fname), "frames/frame%03d.png", i);
     saveFramebufferAsImage(globalFramebuffer, fname, globalFramebuffer->xsize,
                            globalFramebuffer->ysize);
-    ucncCameraOrbit(globalCamera, 6.0f, 0.0f);
+    orbit_camera_z(6.0f);
   }
 
   cncvis_cleanup();
