@@ -369,14 +369,25 @@ void cncvis_render(void) {
                OSD_ALIGN_CENTER, "F1-F5: Views | Space: Toggle Projection");
 }
 
+
 void cncvis_cleanup() {
+	
   // Free assemblies and actors
   ucncAssemblyFree(globalScene);
+  globalScene = NULL;
+  
   // Free lights
   freeAllLights(&globalLights, globalLightCount);
+  globalLights = NULL;
+  globalLightCount = 0;
+  
   // Free camera
   ucncCameraFree(globalCamera);
+  globalCamera = NULL;
+  
   // Close TinyGL context
   glClose();
   ZB_close(globalFramebuffer);
+  globalFramebuffer = NULL;
+  
 }

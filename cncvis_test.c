@@ -2,6 +2,8 @@
 #include "assembly.h"
 #include "utils.h"
 #include <assert.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 
 ZBuffer *globalFramebuffer = NULL;
 ucncAssembly *globalScene = NULL;
@@ -29,6 +31,7 @@ static void test_init_and_motion(void) {
 
   const float *zbuf = ucncGetZBufferOutput();
   assert(zbuf != NULL);
+  cncvis_cleanup();
 }
 
 static void test_reload_config(void) {
@@ -36,11 +39,35 @@ static void test_reload_config(void) {
   assert(rc == 0);
   rc = ucncLoadNewConfiguration("machines/meca500/config.xml");
   assert(rc == 0);
+  cncvis_cleanup();
+}
+
+static void test_orbit_video(void) {
+  int rc = cncvis_init("machines/meca500/config.xml");
+  assert(rc == 0);
+
+  ucncCameraSetTarget(globalCamera, 0.0f, 0.0f, 0.0f);
+  mkdir("frames", 0755);
+
+  for (int i = 0; i < 60; ++i) {
+    cncvis_render();
+    char fname[64];
+    snprintf(fname, sizeof(fname), "frames/frame%03d.png", i);
+    saveFramebufferAsImage(globalFramebuffer, fname, globalFramebuffer->xsize,
+                           globalFramebuffer->ysize);
+    ucncCameraOrbit(globalCamera, 6.0f, 0.0f);
+  }
+
+  cncvis_cleanup();
+
+  system("ffmpeg -y -framerate 30 -i frames/frame%03d.png -c:v libx264 "
+         "-pix_fmt yuv420p orbit.mp4");
 }
 
 int main(void) {
   test_init_and_motion();
   test_reload_config();
+  test_orbit_video();
   cncvis_cleanup();
   return 0;
 }
