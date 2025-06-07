@@ -58,25 +58,27 @@ static void test_reload_config(void) {
 }
 
 static void test_orbit_video(void) {
-  int rc = cncvis_init("machines/meca500/config.xml");
-  assert(rc == 0);
+    int rc = cncvis_init("machines/meca500/config.xml");
+    assert(rc == 0);
 
-  ucncCameraSetTarget(globalCamera, 0.0f, 0.0f, 0.0f);
-  mkdir("frames", 0755);
+    ucncCameraSetTarget(globalCamera, 0.0f, 0.0f, 0.0f);
+    mkdir("frames", 0755);
 
-  for (int i = 0; i < 60; ++i) {
-    cncvis_render();
-    char fname[64];
-    snprintf(fname, sizeof(fname), "frames/frame%03d.png", i);
-    saveFramebufferAsImage(globalFramebuffer, fname, globalFramebuffer->xsize,
-                           globalFramebuffer->ysize);
-    orbit_camera_z(6.0f);
-  }
+    // Debug: Print framebuffer resolution
+    printf("Framebuffer resolution: %d x %d\n", globalFramebuffer->xsize, globalFramebuffer->ysize);
 
-  cncvis_cleanup();
+    for (int i = 0; i < 60; ++i) {
+        cncvis_render();
+        char fname[64];
+        snprintf(fname, sizeof(fname), "frames/frame%03d.png", i);
+        saveFramebufferAsImage(globalFramebuffer, fname, globalFramebuffer->xsize,
+                               globalFramebuffer->ysize);
+        orbit_camera_z(6.0f);
+    }
 
-  system("ffmpeg -y -framerate 30 -i frames/frame%03d.png -c:v libx264 "
-         "-pix_fmt yuv420p orbit.mp4");
+    cncvis_cleanup();
+
+    system("ffmpeg -y -framerate 30 -i frames/frame%03d.png -c:v libx264 -crf 15 -preset veryslow -pix_fmt yuv444p orbit.mp4");
 }
 
 int main(void) {

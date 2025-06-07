@@ -139,99 +139,90 @@ void ucncFrameReady(ZBuffer *framebuffer) {
 }
 
 int cncvis_init(const char *configFile) {
+    // === [1] Extract config directory ===
+    char configDir[1024];
+    getDirectoryFromPath(configFile, configDir);
 
-  char configDir[1024];
-  getDirectoryFromPath(configFile, configDir);
+    // === [2] Set framebuffer size and initialize TinyGL Z-buffer ===
+    ucncSetZBufferDimensions(ZGL_FB_WIDTH, ZGL_FB_HEIGHT);
+    if (!globalFramebuffer) {
+        fprintf(stderr, "Failed to initialize framebuffer.\n");
+        return EXIT_FAILURE;
+    }
 
-  ucncSetZBufferDimensions(ZGL_FB_WIDTH, ZGL_FB_HEIGHT);
+    // === [3] Load scene and light configuration ===
+    if (!loadConfiguration(configFile, &globalScene, &globalLights, &globalLightCount)) {
+        fprintf(stderr, "Failed to load configuration from '%s'.\n", configFile);
+        return EXIT_FAILURE;
+    }
 
-  if (!loadConfiguration(configFile, &globalScene, &globalLights,
-                         &globalLightCount)) {
-    fprintf(stderr, "Failed to load configuration from '%s'.\n", configDir);
-    fprintf(stderr, "Failed to load configuration from '%s'.\n", configFile);
-    return EXIT_FAILURE;
-  }
-  ucncSetAllAssembliesToHome(globalScene);
-  printAssemblyHierarchy(globalScene, 0);
-  printLightHierarchy(globalLights, globalLightCount, 0);
+    ucncSetAllAssembliesToHome(globalScene);
+    printAssemblyHierarchy(globalScene, 0);
+    printLightHierarchy(globalLights, globalLightCount, 0);
 
-  // Initialize TinyGL with the provided framebuffer
-  glInit(globalFramebuffer);
+    // === [4] Initialize TinyGL with the framebuffer ===
+    glInit(globalFramebuffer);
 
-  // Initialize the camera and Y axis as up
-  globalCamera = ucncCameraNew(800.0f, 800.0f, 400.0f, 0.0f, 0.0f, 1.0f);
+    // === [5] Initialize camera ===
+    globalCamera = ucncCameraNew(800.0f, 800.0f, 400.0f, 0.0f, 0.0f, 1.0f);
+    if (!globalCamera) {
+        fprintf(stderr, "Failed to initialize camera.\n");
+        return EXIT_FAILURE;
+    }
 
-  // Set initial target to origin
-  globalCamera->targetX = 0.0f;
-  globalCamera->targetY = 0.0f;
-  globalCamera->targetZ = 0.0f;
-  globalCamera->fov = 45.0f;
-  globalCamera->distance =
-      sqrtf(800.0f * 800.0f + 800.0f * 800.0f + 400.0f * 400.0f);
-  globalCamera->orthoMode = false;
-  globalCamera->orthoScale = 1.0f;
+    globalCamera->targetX = 0.0f;
+    globalCamera->targetY = 0.0f;
+    globalCamera->targetZ = 0.0f;
+    globalCamera->fov = 45.0f;
+    globalCamera->distance = sqrtf(800.0f * 800.0f + 800.0f * 800.0f + 400.0f * 400.0f);
+    globalCamera->orthoMode = false;
+    globalCamera->orthoScale = 1.0f;
+    printCameraDetails(globalCamera);
 
-  printCameraDetails(globalCamera);
+    // === [6] Set OpenGL render state ===
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // Initialize the OSD system after TinyGL is set up
-  osdInit(globalFramebuffer);
-  osdSetDefaultStyle(1.0f, 1.0f, 0.0f, 1.5f, 1); // Yellow text, 1.5x scale
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+    glShadeModel(GL_SMOOTH);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    // === [7] Set initial 3D projection and view ===
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    GLfloat aspectRatio = (GLfloat)globalFramebuffer->xsize / (GLfloat)globalFramebuffer->ysize;
+    gluPerspective(60.0f, aspectRatio, 1.0f, 5000.0f);
 
-  // Clear the color and depth buffers before rendering
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt_custom(
+        globalCamera->positionX, globalCamera->positionY, globalCamera->positionZ,
+        globalCamera->targetX, globalCamera->targetY, globalCamera->targetZ,
+        globalCamera->upX, globalCamera->upY, globalCamera->upZ
+    );
 
-  // Enable depth testing and lighting for the scene
-  glEnable(GL_DEPTH_TEST);
+    // === [8] Render initial background gradient ===
+    float topColor[3] = {0.529f, 0.808f, 0.980f}; // Light Sky Blue
+    float bottomColor[3] = {0.000f, 0.000f, 0.545f}; // Dark Blue
+    setBackgroundGradient(topColor, bottomColor);
 
-  // Enable lighting for the scene
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
+    // === [9] Initialize OSD system ===
+    osdInit(globalFramebuffer);
+    osdSetDefaultStyle(1.0f, 1.0f, 0.0f, 1.5f, 1); // Yellow text, scale 1.5x
 
-  // Enable color material to apply colors from the actor to materials
-  glEnable(GL_COLOR_MATERIAL);
-  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+    // === [10] Draw reference axis initially ===
+    drawAxis(500.0f);
 
-  // Set smooth shading model for better lighting effects
-  glShadeModel(GL_SMOOTH);
+    // Ensure all GL commands are executed
+    glFlush();
 
-  // ------------------------------
-  // Set up 3D projection for the scene
-  // ------------------------------
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  // Apply global rotation to align coordinate systems
-  glRotatef(90.0f, 1.0f, 0.0f, 0.0f); // Rotate +90 degrees around X-axis
-
-  // Correct aspect ratio calculation for the framebuffer
-  GLfloat aspectRatio =
-      (GLfloat)globalFramebuffer->xsize / (GLfloat)globalFramebuffer->ysize;
-  gluPerspective(60.0f, aspectRatio, 1.0f,
-                 5000.0f); // FOV, aspect ratio, near, far planes
-
-  // Switch to modelview matrix for placing objects in the 3D scene
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  // Use the custom gluLookAt function to position the camera
-  gluLookAt_custom(
-      globalCamera->positionX, globalCamera->positionY, globalCamera->positionZ,
-      0.0f, 0.0f, 0.0f, // Looking at the origin
-      globalCamera->upX, globalCamera->upY, globalCamera->upZ); // Y-axis is up
-
-  // ------------------------------
-  // Render the 3D scene (assemblies, actors, etc.)
-  // ------------------------------
-  drawAxis(500.0f); // Draw a reference axis
-
-  // Ensure OpenGL commands are executed
-  glFlush();
-
-  // Return success
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
+
 
 // Function to reset the scene and load a new configuration
 int ucncLoadNewConfiguration(const char *configFile) {
@@ -268,106 +259,129 @@ int ucncLoadNewConfiguration(const char *configFile) {
   return EXIT_SUCCESS;
 }
 
-// Main rendering function
 void cncvis_render(void) {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // === [1] Clear color and depth buffers ===
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity(); // Reset the modelview matrix
-
-  float topColor[3] = {0.529f, 0.808f, 0.980f};    // Light Sky Blue
-  float bottomColor[3] = {0.000f, 0.000f, 0.545f}; // Dark Blue
-  setBackgroundGradient(topColor, bottomColor);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  GLfloat aspectRatio =
-      (GLfloat)globalFramebuffer->xsize / (GLfloat)globalFramebuffer->ysize;
-  gluPerspective(60.0f, aspectRatio, 1.0f, 5000.0f);
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  // Update camera orbit
-  // updateCameraOrbit(globalCamera, ORBIT_RADIUS, ORBIT_ELEVATION,
-  // ORBIT_ROTATION_SPEED);
-  gluLookAt_custom(globalCamera->positionX, globalCamera->positionY,
-                   globalCamera->positionZ, 0.0f, 0.0f, 0.0f, globalCamera->upX,
-                   globalCamera->upY, globalCamera->upZ);
-
-  // Apply global rotation to align coordinate systems
-  // glRotatef(90.0f, 1.0f, 0.0f, 0.0f); // Rotate +90 degrees around X-axis
-
-  ucncAssemblyRender(globalScene);
-  drawAxis(500.0f);
-
-  // Calculate and display FPS
-  float fps = calculateFPS();
-
-  // Get the current position of the machine's tool or active component
-  // We'll use a reasonable default if no "tool" assembly is found
-  float machine_x = 0.0f, machine_y = 0.0f, machine_z = 0.0f;
-
-  // Find the "tool" assembly or any assembly that represents the tool position
-  ucncAssembly *tool = findAssemblyByName(globalScene, "tool");
-  if (tool) {
-    // Use the tool's current position
-    machine_x = tool->positionX;
-    machine_y = tool->positionY;
-    machine_z = tool->positionZ;
-  } else {
-    // If no tool assembly is found, try to find another meaningful assembly
-    // This is just an example - adjust based on your machine structure
-    ucncAssembly *endEffector = findAssemblyByName(globalScene, "end_effector");
-    if (endEffector) {
-      machine_x = endEffector->positionX;
-      machine_y = endEffector->positionY;
-      machine_z = endEffector->positionZ;
+    // === [2] Render background gradient ===
+    {
+        float topColor[3] = {0.529f, 0.808f, 0.980f}; // Light Sky Blue
+        float bottomColor[3] = {0.000f, 0.000f, 0.545f}; // Dark Blue
+        setBackgroundGradient(topColor, bottomColor);
     }
-    // Otherwise, it will use the default 0,0,0 values
-  }
 
-  // Draw machine position information
-  osdDrawTextf(10, 10, OSD_ALIGN_LEFT, "X: %.3f Y: %.3f Z: %.3f", machine_x,
-               machine_y, machine_z);
+    // === [3] Set up 3D projection ===
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    GLfloat aspect = (GLfloat)globalFramebuffer->xsize / (GLfloat)globalFramebuffer->ysize;
+    gluPerspective(60.0f, aspect, 1.0f, 5000.0f);
 
-  // Draw machine status in a highlighted box
-  int statusX = globalFramebuffer->xsize - 10;
-  int statusY = 10;
+    // === [4] Set up camera (modelview matrix) ===
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt_custom(
+        globalCamera->positionX, globalCamera->positionY, globalCamera->positionZ,
+        globalCamera->targetX, globalCamera->targetY, globalCamera->targetZ,
+        globalCamera->upX, globalCamera->upY, globalCamera->upZ
+    );
 
-  // Create a combined status text with RUNNING and FPS on separate lines
-  char statusText[64];
-  snprintf(statusText, sizeof(statusText), "RUNNING\n%.1f FPS", fps);
+    // === [5] Ensure proper OpenGL state for 3D rendering ===
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
 
-  // Calculate text size for background - account for two lines
-  OSDStyle customStyle = {0.0f, 1.0f, 0.0f, 1.2f, 1}; // Green text
-  int textWidth =
-      calculateTextWidth("RUNNING", customStyle.scale, customStyle.spacing);
-  int fpsWidth =
-      calculateTextWidth("100.0 FPS", customStyle.scale, customStyle.spacing);
+    // === [6] Render 3D scene ===
+    ucncAssemblyRender(globalScene);
+    drawAxis(500.0f); // Optional reference axis
 
-  // Use the wider of the two widths
-  if (fpsWidth > textWidth) {
-    textWidth = fpsWidth;
-  }
+    // === [7] Calculate frame timing ===
+    float fps = calculateFPS();
 
-  // Calculate height for two lines of text
-  int textHeight = 8 * 2 * customStyle.scale + 4;
+    // === [8] Determine machine/tool position ===
+    float machine_x = 0.0f, machine_y = 0.0f, machine_z = 0.0f;
+    ucncAssembly *tool = findAssemblyByName(globalScene, "tool");
+    if (tool) {
+        machine_x = tool->positionX;
+        machine_y = tool->positionY;
+        machine_z = tool->positionZ;
+    } else {
+        ucncAssembly *endEffector = findAssemblyByName(globalScene, "end_effector");
+        if (endEffector) {
+            machine_x = endEffector->positionX;
+            machine_y = endEffector->positionY;
+            machine_z = endEffector->positionZ;
+        }
+    }
 
-  // Draw background - make it taller for two lines
-  osdDrawRect(statusX - textWidth - 6, statusY - 2, textWidth + 12,
-              textHeight + 4, 0.0f, 0.0f, 0.0f,
-              0.7f); // Semi-transparent black background
+    // === [9] Render OSD (on-screen display) ===
+    {
+        // Set up 2D orthographic projection for OSD
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0.0, globalFramebuffer->xsize, 0.0, globalFramebuffer->ysize, -1.0, 1.0);
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
 
-  // Draw text on top
-  osdDrawTextStyled(statusText, statusX, statusY, OSD_ALIGN_RIGHT,
-                    &customStyle);
+        // Disable depth test and lighting for OSD
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_LIGHTING);
 
-  // Draw help text at bottom
-  osdDrawTextf(globalFramebuffer->xsize / 2, globalFramebuffer->ysize - 20,
-               OSD_ALIGN_CENTER, "F1-F5: Views | Space: Toggle Projection");
+        // Draw machine coordinates
+        osdDrawTextf(10, 10, OSD_ALIGN_LEFT, "X: %.3f Y: %.3f Z: %.3f", machine_x, machine_y, machine_z);
+
+        // Prepare status text
+        char statusText[64];
+        snprintf(statusText, sizeof(statusText), "RUNNING\n%.1f FPS", fps);
+
+        // Calculate bounding box for status panel
+        OSDStyle style = {0.0f, 1.0f, 0.0f, 1.2f, 1}; // Green, 1.2x scale
+        int textW = calculateTextWidth("RUNNING", style.scale, style.spacing);
+        int fpsW = calculateTextWidth("100.0 FPS", style.scale, style.spacing);
+        int textWidth = (fpsW > textW ? fpsW : textW);
+        int textHeight = 8 * 2 * style.scale + 4;
+
+        int statusX = globalFramebuffer->xsize - 10;
+        int statusY = 10;
+
+        // Draw background panel
+        osdDrawRect(
+            statusX - textWidth - 6,
+            statusY - 2,
+            textWidth + 12,
+            textHeight + 4,
+            0.0f, 0.0f, 0.0f, 0.7f // Semi-transparent black
+        );
+
+        // Draw text overlay
+        osdDrawTextStyled(statusText, statusX, statusY, OSD_ALIGN_RIGHT, &style);
+
+        // Draw bottom help text
+        osdDrawTextf(
+            globalFramebuffer->xsize / 2,
+            globalFramebuffer->ysize - 20,
+            OSD_ALIGN_CENTER,
+            "F1-F5: Views | Space: Toggle Projection"
+        );
+
+        // Restore matrices and states
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        // Restore 3D rendering states
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_LIGHTING);
+    }
+
+    // === [10] Ensure all GL commands are executed ===
+    glFlush();
 }
+
 
 
 void cncvis_cleanup() {

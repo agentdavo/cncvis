@@ -7,6 +7,9 @@
 #include "assembly.h"
 #include "actor.h"
 
+// allow utils.c to see the global TinyGL framebuffer
+extern ZBuffer *globalFramebuffer;
+
 // Function to get current time in milliseconds
 double getCurrentTimeInMs();
 

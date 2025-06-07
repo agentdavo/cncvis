@@ -1,26 +1,44 @@
 /* utils.c */
 
 #include "utils.h"
+#include "tinygl/include/GL/gl.h"
+#include "tinygl/include/GL/glu.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 
+// allow utils.c to see the global TinyGL framebuffer
+extern ZBuffer *globalFramebuffer;
+
 // Implementations of utility functions
 
 double getCurrentTimeInMs() {
-    #ifdef _WIN32
-        // Windows implementation
-        LARGE_INTEGER frequency;
-        LARGE_INTEGER currentTime;
-        QueryPerformanceFrequency(&frequency);
-        QueryPerformanceCounter(&currentTime);
-        return (double)(currentTime.QuadPart * 1000) / frequency.QuadPart;
-    #else
-        // POSIX implementation
-        struct timeval time;
-        gettimeofday(&time, NULL);
-        return (double)(time.tv_sec) * 1000.0 + (double)(time.tv_usec) / 1000.0;
-    #endif
+#ifdef _WIN32
+    // Windows implementation
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER currentTime;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&currentTime);
+    return (double)(currentTime.QuadPart * 1000) / frequency.QuadPart;
+#else
+    // POSIX implementation
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    return (double)(time.tv_sec) * 1000.0 + (double)(time.tv_usec) / 1000.0;
+#endif
+}
+
+void setupProjection(int width, int height) {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glRotatef(90.0f, 1, 0, 0);
+    GLfloat aspect = (GLfloat)width / (GLfloat)height;
+    gluPerspective(60.0f, aspect, 1.0f, 5000.0f);
+    glMatrixMode(GL_MODELVIEW);
 }
 
 void initProfilingStats(ProfilingStats *stats) {
@@ -93,154 +111,121 @@ void printProfilingStats(ProfilingStats *stats, int totalFrames) {
 }
 
 void drawArrowHead(float size, float x, float y, float z) {
-    // Draws a small cone-like arrowhead at the given (x, y, z) position along the axis
-    float arrowSize = size * 0.1f;  // Arrowhead size proportional to the axis size
-
+    float arrowSize = size * 0.1f;
     glBegin(GL_TRIANGLES);
-        // X-Axis (Red)
         if (x != 0.0f) {
-            glColor3f(1.0f, 0.0f, 0.0f);
-            // Triangle forming the arrowhead pointing in the +X direction
-            glVertex3f(x, 0.0f, 0.0f);            // Arrowhead tip
-            glVertex3f(x - arrowSize, arrowSize, 0.0f); // Arrowhead base
-            glVertex3f(x - arrowSize, -arrowSize, 0.0f); // Arrowhead base
+            glColor3f(1,0,0);
+            glVertex3f(x,0,0);
+            glVertex3f(x - arrowSize, arrowSize, 0);
+            glVertex3f(x - arrowSize, -arrowSize,0);
         }
-        // Y-Axis (Green)
         if (y != 0.0f) {
-            glColor3f(0.0f, 1.0f, 0.0f);
-            // Triangle forming the arrowhead pointing in the +Y direction
-            glVertex3f(0.0f, y, 0.0f);            // Arrowhead tip
-            glVertex3f(-arrowSize, y - arrowSize, 0.0f); // Arrowhead base
-            glVertex3f(arrowSize, y - arrowSize, 0.0f);  // Arrowhead base
+            glColor3f(0,1,0);
+            glVertex3f(0,y,0);
+            glVertex3f(-arrowSize, y - arrowSize,0);
+            glVertex3f(arrowSize,  y - arrowSize,0);
         }
-        // Z-Axis (Blue)
         if (z != 0.0f) {
-            glColor3f(0.0f, 0.0f, 1.0f);
-            // Triangle forming the arrowhead pointing in the +Z direction
-            glVertex3f(0.0f, 0.0f, z);            // Arrowhead tip
-            glVertex3f(0.0f, arrowSize, z - arrowSize);  // Arrowhead base
-            glVertex3f(0.0f, -arrowSize, z - arrowSize); // Arrowhead base
+            glColor3f(0,0,1);
+            glVertex3f(0,0,z);
+            glVertex3f(0, arrowSize, z - arrowSize);
+            glVertex3f(0,-arrowSize, z - arrowSize);
         }
     glEnd();
 }
 
 void drawAxis(float size) {
-    // Validate the size to avoid potential issues with zero or negative values
-    if (size <= 0.0f) {
-        size = 1.0f;  // Set a default size if an invalid one is provided
-    }
-
-    // Disable lighting to ensure axes are rendered with pure colors
+    if (size <= 0.0f) size = 1.0f;
     glDisable(GL_LIGHTING);
     glPushMatrix();
-
-    // Draw axis lines
     glBegin(GL_LINES);
-        // X-Axis (Red)
-        glColor3f(1.0f, 0.0f, 0.0f);
-        glVertex3f(0.0f, 0.0f, 0.0f);
-        glVertex3f(size, 0.0f, 0.0f);
-
-        // Y-Axis (Green)
-        glColor3f(0.0f, 1.0f, 0.0f);
-        glVertex3f(0.0f, 0.0f, 0.0f);
-        glVertex3f(0.0f, size, 0.0f);
-
-        // Z-Axis (Blue)
-        glColor3f(0.0f, 0.0f, 1.0f);
-        glVertex3f(0.0f, 0.0f, 0.0f);
-        glVertex3f(0.0f, 0.0f, size);
+        glColor3f(1,0,0);
+        glVertex3f(0,0,0); glVertex3f(size,0,0);
+        glColor3f(0,1,0);
+        glVertex3f(0,0,0); glVertex3f(0,size,0);
+        glColor3f(0,0,1);
+        glVertex3f(0,0,0); glVertex3f(0,0,size);
     glEnd();
-
-    // Draw arrowheads for each axis
-    drawArrowHead(size, size, 0.0f, 0.0f);  // X-Axis arrowhead
-    drawArrowHead(size, 0.0f, size, 0.0f);  // Y-Axis arrowhead
-    drawArrowHead(size, 0.0f, 0.0f, size);  // Z-Axis arrowhead
-
-    // Restore previous OpenGL state
+    drawArrowHead(size,size,0,0);
+    drawArrowHead(size,0,size,0);
+    drawArrowHead(size,0,0,size);
     glPopMatrix();
-    glEnable(GL_LIGHTING);  // Re-enable lighting after drawing the axes
+    glEnable(GL_LIGHTING);
 }
 
-// Function to set a 3D gradient background
 void setBackgroundGradient(float topColor[3], float bottomColor[3]) {
-    // Disable lighting to prevent it from affecting the background colors
+    // Debug: Print framebuffer dimensions
+    printf("Rendering background with framebuffer size: %d x %d\n", 
+           globalFramebuffer->xsize, globalFramebuffer->ysize);
+
+    // Ensure full viewport
+    glViewport(0, 0, globalFramebuffer->xsize, globalFramebuffer->ysize);
+
+    // Disable depth testing/writing to ensure background is behind the scene
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+
+    // Disable lighting for pure color gradient
     glDisable(GL_LIGHTING);
+
+    // Preserve modelview matrix
+    glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    // Begin drawing a quad that covers the entire screen as per frustum's far value.
+    glLoadIdentity(); // Reset modelview to avoid scene transformations
+
+    // Render large quad at far z to cover the view frustum
     glBegin(GL_QUADS);
-        // Bottom-left vertex (with bottomColor)
         glColor3fv(bottomColor);
-        glVertex3f(-1500.0f, -1500.0f, -1500.0f);
-
-        // Top-left vertex (with topColor)
+        glVertex3f(-1500.0f, -1500.0f, -1500.0f); // Bottom-left
         glColor3fv(topColor);
-        glVertex3f(-1500.0f, 1500.0f, -1500.0f);
-
-        // Top-right vertex (with topColor)
+        glVertex3f(-1500.0f, 1500.0f, -1500.0f);  // Top-left
         glColor3fv(topColor);
-        glVertex3f(1500.0f, 1500.0f, -1500.0);
-
-        // Bottom-right vertex (with bottomColor)
+        glVertex3f(1500.0f, 1500.0f, -1500.0f);   // Top-right
         glColor3fv(bottomColor);
-        glVertex3f(1500.0f, -1500.0f, -1500.0);
+        glVertex3f(1500.0f, -1500.0f, -1500.0f);  // Bottom-right
     glEnd();
+
+    // Restore modelview matrix
     glPopMatrix();
-    // Re-enable lighting for subsequent rendering
+
+    // Restore OpenGL states
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
     glEnable(GL_LIGHTING);
 }
 
 
 
-
-
 void CreateGround(float sizeX, float sizeY) {
     glPushMatrix();
-
-    // Set the color for the ground (dark grey)
-    glColor3f(0.25f, 0.25f, 0.25f);
-
-    // Render a simple plane for the ground
+    glColor3f(0.25f,0.25f,0.25f);
     glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);          // Normal facing up
-    glVertex3f(-sizeX, -sizeY, -100.0f);  // Bottom left
-    glVertex3f(sizeX, -sizeY, -100.0f);   // Bottom right
-    glVertex3f(sizeX, sizeY, -100.0f);    // Top right
-    glVertex3f(-sizeX, sizeY, -100.0f);   // Top left
+      glNormal3f(0,0,1);
+      glVertex3f(-sizeX,-sizeY,-100.0f);
+      glVertex3f( sizeX,-sizeY,-100.0f);
+      glVertex3f( sizeX, sizeY,-100.0f);
+      glVertex3f(-sizeX, sizeY,-100.0f);
     glEnd();
-
     glPopMatrix();
 }
 
-void saveFramebufferAsImage(ZBuffer *framebuffer, const char *filename, int width, int height) {
-    if (!framebuffer || !filename) {
-        fprintf(stderr, "Invalid framebuffer or filename in saveFramebufferAsImage.\n");
-        return;
-    }
+void saveFramebufferAsImage(ZBuffer *framebuffer,
+                            const char *filename,
+                            int width,
+                            int height) {
+    if (!framebuffer || !filename) return;
+    PIXEL *imbuf = calloc(width*height, sizeof(PIXEL));
+    if (!imbuf) return;
+    unsigned char *pbuf = malloc(3*width*height);
+    if (!pbuf) { free(imbuf); return; }
 
-    // TinyGL stores the framebuffer in BGR format, convert it to RGB
-    PIXEL* imbuf = NULL;
-    unsigned char* pbuf = NULL;
-    fflush(stdout);
-    imbuf = calloc(1, sizeof(PIXEL) * width * height);
-    if (!imbuf) {
-        fprintf(stderr, "Memory allocation failed in saveFramebufferAsImage.\n");
-        return;
-    }
     ZB_copyFrameBuffer(framebuffer, imbuf, width * sizeof(PIXEL));
-    pbuf = malloc(3 * width * height);
-    if (!pbuf) {
-        fprintf(stderr, "Memory allocation failed for pixel buffer in saveFramebufferAsImage.\n");
-        free(imbuf);
-        return;
-    }
-    for(int i = 0; i < width * height; i++) {
+    for (int i = 0; i < width*height; i++) {
         pbuf[3*i+0] = GET_RED(imbuf[i]);
         pbuf[3*i+1] = GET_GREEN(imbuf[i]);
         pbuf[3*i+2] = GET_BLUE(imbuf[i]);
     }
-    // Save as PNG for better quality and compatibility
-    if (!stbi_write_png(filename, width, height, 3, pbuf, width * 3)) {
+    if (!stbi_write_png(filename, width, height, 3, pbuf, width*3)) {
         fprintf(stderr, "Failed to write image to %s\n", filename);
     }
     free(imbuf);
@@ -249,172 +234,117 @@ void saveFramebufferAsImage(ZBuffer *framebuffer, const char *filename, int widt
 
 void printAssemblyHierarchy(ucncAssembly *assembly, int level) {
     if (!assembly) return;
-
-    // Indentation based on level
-    for (int i = 0; i < level; i++) {
-        printf("  ");
-    }
-
-    // Print detailed information about the assembly
+    for (int i=0; i<level; i++) printf("  ");
     printf("Assembly '%s':\n", assembly->name);
-
-    // Indentation for detailed fields
-    for (int i = 0; i < level + 1; i++) {
-        printf("  ");
-    }
-    printf("Origin: (%.2f, %.2f, %.2f)\n", assembly->originX, assembly->originY, assembly->originZ);
-
-    for (int i = 0; i < level + 1; i++) {
-        printf("  ");
-    }
-    printf("Position: (%.2f, %.2f, %.2f)\n", assembly->positionX, assembly->positionY, assembly->positionZ);
-
-    for (int i = 0; i < level + 1; i++) {
-        printf("  ");
-    }
-    printf("Rotation: (%.2f, %.2f, %.2f)\n", assembly->rotationX, assembly->rotationY, assembly->rotationZ);
-
-    for (int i = 0; i < level + 1; i++) {
-        printf("  ");
-    }
-    printf("Home Position: (%.2f, %.2f, %.2f)\n", assembly->homePositionX, assembly->homePositionY, assembly->homePositionZ);
-
-    for (int i = 0; i < level + 1; i++) {
-        printf("  ");
-    }
-    printf("Home Rotation: (%.2f, %.2f, %.2f)\n", assembly->homeRotationX, assembly->homeRotationY, assembly->homeRotationZ);
-
-    for (int i = 0; i < level + 1; i++) {
-        printf("  ");
-    }
-    printf("Color: (R: %.2f, G: %.2f, B: %.2f)\n", assembly->colorR, assembly->colorG, assembly->colorB);
-
-    for (int i = 0; i < level + 1; i++) {
-        printf("  ");
-    }
-    printf("Motion: Type '%s', Axis '%c', Invert: %s\n", assembly->motionType, assembly->motionAxis, assembly->invertMotion ? "yes" : "no");
-
-    // Recursively print child assemblies
-    for (int i = 0; i < assembly->assemblyCount; i++) {
-        printAssemblyHierarchy(assembly->assemblies[i], level + 1);
+    for (int i=0; i<level+1; i++) printf("  ");
+    printf("Origin: (%.2f, %.2f, %.2f)\n",
+           assembly->originX, assembly->originY, assembly->originZ);
+    for (int i=0; i<level+1; i++) printf("  ");
+    printf("Position: (%.2f, %.2f, %.2f)\n",
+           assembly->positionX, assembly->positionY, assembly->positionZ);
+    for (int i=0; i<level+1; i++) printf("  ");
+    printf("Rotation: (%.2f, %.2f, %.2f)\n",
+           assembly->rotationX, assembly->rotationY, assembly->rotationZ);
+    for (int i=0; i<level+1; i++) printf("  ");
+    printf("Home Pos: (%.2f, %.2f, %.2f)\n",
+           assembly->homePositionX, assembly->homePositionY, assembly->homePositionZ);
+    for (int i=0; i<level+1; i++) printf("  ");
+    printf("Home Rot: (%.2f, %.2f, %.2f)\n",
+           assembly->homeRotationX, assembly->homeRotationY, assembly->homeRotationZ);
+    for (int i=0; i<level+1; i++) printf("  ");
+    printf("Color: (R:%.2f, G:%.2f, B:%.2f)\n",
+           assembly->colorR, assembly->colorG, assembly->colorB);
+    for (int i=0; i<level+1; i++) printf("  ");
+    printf("Motion: Type '%s', Axis '%c', Invert: %s\n",
+           assembly->motionType,
+           assembly->motionAxis,
+           assembly->invertMotion ? "yes" : "no");
+    for (int i=0; i<assembly->assemblyCount; i++) {
+        printAssemblyHierarchy(assembly->assemblies[i], level+1);
     }
 }
 
-
 void getDirectoryFromPath(const char *filePath, char *dirPath) {
-    // Find the last '/' or '\' in the file path
     const char *lastSlash = strrchr(filePath, '/');
-    if (!lastSlash) {
-        lastSlash = strrchr(filePath, '\\');  // For Windows paths
-    }
-
+    if (!lastSlash) lastSlash = strrchr(filePath, '\\');
     if (lastSlash) {
-        // Calculate the length of the directory part
-        size_t length = lastSlash - filePath;
-        strncpy(dirPath, filePath, length);
-        dirPath[length] = '\0';  // Ensure the string is null-terminated
+        size_t len = lastSlash - filePath;
+        strncpy(dirPath, filePath, len);
+        dirPath[len] = '\0';
     } else {
-        // If no slashes are found, assume the current directory (".")
         strcpy(dirPath, ".");
     }
 }
 
-
-
-void scanAssembly(const ucncAssembly *assembly, int *totalAssemblies, int *totalActors)
-{
+void scanAssembly(const ucncAssembly *assembly,
+                  int *totalAssemblies,
+                  int *totalActors) {
     if (!assembly) return;
-
     printf("Assembly: %s\n", assembly->name);
     (*totalAssemblies)++;
-
-    // Iterate over actors in the assembly
-    for (int i = 0; i < assembly->actorCount; i++) {
+    for (int i=0; i<assembly->actorCount; i++) {
         ucncActor *actor = assembly->actors[i];
-
         if (actor && actor->stlObject) {
-            printf("  Actor: %s, STL Data Size: %lu bytes, Triangle Count: %lu\n",
-                   actor->name,
-                   actor->triangleCount * actor->stride,
-                   actor->triangleCount);
+            printf("  Actor: %s, Triangles: %lu\n",
+                   actor->name, actor->triangleCount);
             (*totalActors)++;
         } else {
             printf("  Actor: %s has no STL data.\n", actor->name);
         }
     }
-
-    // Recursively scan child assemblies
-    for (int i = 0; i < assembly->assemblyCount; i++) {
-        scanAssembly(assembly->assemblies[i], totalAssemblies, totalActors);
+    for (int i=0; i<assembly->assemblyCount; i++) {
+        scanAssembly(assembly->assemblies[i],
+                     totalAssemblies,
+                     totalActors);
     }
 }
 
-void scanGlobalScene(const ucncAssembly *assembly)
-{
+void scanGlobalScene(const ucncAssembly *assembly) {
     if (!assembly) {
         printf("No assemblies found in the global scene.\n");
         return;
     }
-
-    int totalAssemblies = 0;
-    int totalActors = 0;
-
+    int totalA=0, totalAct=0;
     printf("Scanning Global Scene...\n");
-
-    // Start scanning from the root assembly
-    scanAssembly(assembly, &totalAssemblies, &totalActors);
-
-    // Report total counts
-    printf("Total Assemblies: %d\n", totalAssemblies);
-    printf("Total Actors: %d\n", totalActors);
+    scanAssembly(assembly, &totalA, &totalAct);
+    printf("Total Assemblies: %d\n", totalA);
+    printf("Total Actors: %d\n", totalAct);
 }
 
-
 static double previousTime = 0.0;
-static double currentTime = 0.0;
-static int frameCount = 0;
-static float fps = 0.0f;
+static double currentTime  = 0.0;
+static int frameCount      = 0;
+static float fps           = 0.0f;
 
-// FPS calculation
-float calculateFPS(void)
-{
+float calculateFPS(void) {
     struct timeval time;
     gettimeofday(&time, NULL);
-    currentTime = (double)(time.tv_sec) * 1000.0 + (double)(time.tv_usec) / 1000.0;
-
+    currentTime = time.tv_sec*1000.0 + time.tv_usec/1000.0;
     frameCount++;
-    double deltaTime = currentTime - previousTime;
-
-    if (deltaTime >= 1000.0)  // Every second
-    {
-        fps = (float)frameCount / (deltaTime / 1000.0);  // Calculate FPS
+    double delta = currentTime - previousTime;
+    if (delta >= 1000.0) {
+        fps = frameCount / (delta/1000.0);
         previousTime = currentTime;
-        frameCount = 0;  // Reset frame count
+        frameCount = 0;
     }
-
     return fps;
 }
 
-// Render FPS data on the screen
-void renderFPSData(int frameNumber, float fps)
-{
+void renderFPSData(int frameNumber, float fps) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
-    glLoadIdentity();
-
+      glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadIdentity();
+      glLoadIdentity();
 
-    glTextSize(GL_TEXT_SIZE16x16);
-    unsigned int color = 0x00FFFFFF;
-
-    char textBuffer[256];
-    snprintf(textBuffer, sizeof(textBuffer), "FRM: %d", frameNumber);
-    glDrawText((unsigned char *)textBuffer, 10, 10, color);
-
-    snprintf(textBuffer, sizeof(textBuffer), "FPS: %.1f", fps);
-    glDrawText((unsigned char *)textBuffer, 10, 30, color);
+      glTextSize(GL_TEXT_SIZE16x16);
+      unsigned int color = 0x00FFFFFF;
+      char buf[64];
+      snprintf(buf, sizeof(buf), "FRM: %d", frameNumber);
+      glDrawText((unsigned char*)buf, 10, 10, color);
+      snprintf(buf, sizeof(buf), "FPS: %.1f", fps);
+      glDrawText((unsigned char*)buf, 10, 30, color);
 
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
