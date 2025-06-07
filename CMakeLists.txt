@@ -84,6 +84,18 @@ install(TARGETS cncvis
 # ================================
 enable_testing()
 
+# Find ffmpeg for video encoding in tests
+find_program(FFMPEG_EXECUTABLE ffmpeg)
+if(FFMPEG_EXECUTABLE)
+  message(STATUS "Found ffmpeg: ${FFMPEG_EXECUTABLE}")
+else()
+  message(WARNING "ffmpeg not found, video test will be skipped")
+endif()
+
+# Copy machine descriptions to build directory so tests can access them
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/machines
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(cncvis_test test_cncvis.c)
 target_include_directories(cncvis_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -95,3 +107,12 @@ target_include_directories(cncvis_test PRIVATE
 target_link_libraries(cncvis_test PRIVATE cncvis tinygl stlio stb mxml_static m)
 
 add_test(NAME cncvis_basic COMMAND cncvis_test)
+
+# Optional target to generate a short orbit video
+if(FFMPEG_EXECUTABLE)
+  add_custom_target(orbit_video
+    COMMAND cncvis_test
+    COMMAND ${FFMPEG_EXECUTABLE} -y -framerate 30 -i frames/frame%03d.png -c:v libx264 -pix_fmt yuv420p orbit.mp4
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS cncvis_test)
+endif()
