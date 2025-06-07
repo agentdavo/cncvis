@@ -4,7 +4,7 @@
 It parses an XML description of the machine, loads STL files for the
 individual parts and draws them using **TinyGL**. The project is self
 contained – TinyGL, a simple STL loader and the Mini-XML parser are
-included under `cncvis/`.
+included in subdirectories.
 
 ## Features
 
@@ -70,7 +70,7 @@ illumination. See `machines/meca500/config.xml` for a complete example.
   </actors>
   <lights>
     <light id="GL_LIGHT0">
-      <position x="200" y="1000" z="1000" w="1"/>
+      <position x="0" y="0" z="0"/>
       <ambient r="0" g="0" b="0"/>
       <diffuse r="1" g="1" b="1"/>
       <specular r="1" g="1" b="1"/>
@@ -88,11 +88,11 @@ illumination. See `machines/meca500/config.xml` for a complete example.
 
 ## Using the API
 
-Include `cncvis/api.h` and link with `libcncvis.a`. A minimal program
+Include `api.h` and link with `libcncvis.a`. A minimal program
 looks like:
 
 ```c
-#include "cncvis/api.h"
+#include "api.h"
 
 int main(void) {
     if (cncvis_init("machines/meca500/config.xml") != 0)
