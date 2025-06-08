@@ -3,7 +3,7 @@
  * Texture test written by Gek
  *
  */
-//#define PLAY_MUSIC
+// #define PLAY_MUSIC
 
 #include <math.h>
 #include <stdio.h>
@@ -14,8 +14,7 @@
 
 #include "../include/zbuffer.h"
 #define CHAD_API_IMPL
-#define CHAD_MATH_IMPL
-#include "../include-demo/3dMath.h"
+#include "../include-demo/chad_math.h"
 #ifdef PLAY_MUSIC
 #include "../include-demo/api_audio.h"
 #else
