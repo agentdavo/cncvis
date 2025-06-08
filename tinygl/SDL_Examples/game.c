@@ -1,5 +1,5 @@
 
-//#define PLAY_MUSIC
+// #define PLAY_MUSIC
 
 #include <math.h>
 #include <stdio.h>
@@ -8,9 +8,8 @@
 
 #include "../include/GL/gl.h"
 #define STB_IMAGE_IMPLEMENTATION
+#include "../include-demo/chad_math.h"
 #include "../include-demo/stb_image.h"
-#define CHAD_MATH_IMPL
-#include "../include-demo/3dMath.h"
 #include "../include-demo/tobjparse.h"
 #define CHAD_API_IMPL
 #include "../include/zbuffer.h"
@@ -386,13 +385,13 @@ int main(int argc, char** argv) {
 		mousey = 0;
 		while (SDL_PollEvent(&evt))
 			EVENT_HANDLER(&evt);
-			/*
-					switch(evt.type) {
+		/*
+				switch(evt.type) {
 
 
-					}
-			*/
-			// draw scene:
+				}
+		*/
+		// draw scene:
 #define WIDTH winSizeX
 #define HEIGHT winSizeY
 		glMatrixMode(GL_PROJECTION);
@@ -404,7 +403,7 @@ int main(int argc, char** argv) {
 		glPushMatrix(); // Pushing on the LookAt Matrix.
 
 		vec3 right = normalizev3(crossv3(camforw, camup));
-		matrix = (lookAt(campos, addv3(campos, camforw), camup)); 
+		matrix = (lookAt(campos, addv3(campos, camforw), camup));
 		glLoadMatrixf(matrix.d);
 		if (wasdstate[0])
 			campos = addv3(campos, scalev3(0.1, camforw));
@@ -416,7 +415,8 @@ int main(int argc, char** argv) {
 			campos = addv3(campos, scalev3(0.1, right));
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
-		if (doTextures) glBindTexture(GL_TEXTURE_2D, tex);
+		if (doTextures)
+			glBindTexture(GL_TEXTURE_2D, tex);
 
 		{
 			if (doTextures)

@@ -1,4 +1,4 @@
-# TinyGL
+#TinyGL
 
 ![tgl logo](tgl_minimal.png)
 A major overhaul of Fabrice Bellard's TinyGL to be
@@ -50,13 +50,17 @@ These are the C standard library includes used in the RAW DEMOS.
 
 ```c
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 ```
 If your system supports it, the library can also take advantage of `alignas` to get improved SIMD support,
 which can be disabled in zfeatures. This adds a dependency to `stdalign.h` but greatly increases vertex processing speed.
+
+When compiled for 32-bit color the frame buffer packs four ARGB8888 pixels into
+a 16-byte `PixelQuad`. This layout lines up with LVGL's preferred DMA block size
+and lets the compiler emit efficient SIMD loads and stores.
 
 (This is disabled by default for maximum portability)
 
@@ -255,24 +259,25 @@ in the src/ directory.
 You can compile the code yourself without makefiles using these directives:
 
 ```sh
-# inside the src directory
+#inside the src directory
 gcc -O3 -c *.c 
 ar rcs libTinyGL.a *.o
-# the library is now compiled
+#the library is now compiled
 cp libTinyGL.a ../lib
 cd ..
 cd SDL_Examples/
-# build the menu demo
+#build the menu demo
 gcc -O3 menu.c -o menu -lSDL ../lib/libTinyGL.a -lm
-# gears
+#gears
 gcc -O3 gears.c -o gears -lSDL ../lib/libTinyGL.a -lm
 ```
 
 This is how you use TinyGL in a program:
 
 ```c
-//First you have to include
-//(Note that you must either link against libTinyGL.a or compile it in the same compilation unit as your program)
+// First you have to include
+//(Note that you must either link against libTinyGL.a or compile it in the same
+// compilation unit as your program)
 #include "../include/GL/gl.h"
 #include "../include/zbuffer.h"
 
@@ -462,8 +467,8 @@ The compiletime test is now disabled by default since it may not be "liked" by s
 you can enable it in GL/gl.h
 
 ```c
-//at the top of include/GL/gl.h
-//Enable TinyGL's Compiletime Compatibility Test (Scroll down)
+// at the top of include/GL/gl.h
+// Enable TinyGL's Compiletime Compatibility Test (Scroll down)
 #define COMPILETIME_TINYGL_COMPAT_TEST 1
 ```
 
@@ -500,11 +505,11 @@ but adjusting it is easy, see the SDL examples under SDL_EXAMPLES (They require 
 
 The library is sometimes by default configured for RGBA or 5R6G5B, check include/zfeatures.h and change the values in this table:
 ```c
-#define TGL_FEATURE_8_BITS         0
-#define TGL_FEATURE_24_BITS        0
-//These are the only maintained modes.
-#define TGL_FEATURE_16_BITS        1
-#define TGL_FEATURE_32_BITS        0
+#define TGL_FEATURE_8_BITS 0
+#define TGL_FEATURE_24_BITS 0
+// These are the only maintained modes.
+#define TGL_FEATURE_16_BITS 1
+#define TGL_FEATURE_32_BITS 0
 ```
 
 make sure that only ONE of these values is 1.
@@ -526,7 +531,8 @@ Consider using it!
 
 _______________________________________________________________________________________
 
-# Here is the old description of TinyGL, saved for historical/attribution purposes:
+#Here is the old description of TinyGL,                                        \
+    saved for historical / attribution purposes:
 
 ### I do not endorse or promote its contents, they are here for attribution only.
 

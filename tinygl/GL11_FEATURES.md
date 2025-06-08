@@ -13,6 +13,11 @@ The following core features are implemented:
 - Basic scissor testing via `glScissor` and `GL_SCISSOR_TEST`
 - Polygon offset adjustment and stencil/logic op stubs
 - Textured primitives including per-vertex colors
+- `glDrawArrays` for array-based rendering
+- `glDrawPixels` and `glPixelZoom` for software image blits
+- Raster position helpers (`glRasterPos*`) and `glRectf`
+- `glTexImage1D` (internally resized to 2D)
+- `glGetString` returns vendor/renderer/version strings
 - Benchmark utility exercises many GL 1.1 calls with a rotating icosahedron
 
 Alpha testing and stencil test state are tracked with `glAlphaFunc`,
