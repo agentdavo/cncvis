@@ -173,9 +173,7 @@ static void gl_vertex_transform(GLVertex* v) {
 	GLfloat* m;
 	GLContext* c = gl_get_context();
 
-	if (c->lighting_enabled)
-
-	{
+	if (c->lighting_enabled) {
 		/* eye coordinates needed for lighting */
 		V4* n;
 		m = &c->matrix_stack_ptr[0]->m[0][0];
@@ -260,8 +258,9 @@ void glopVertex(GLParam* p) {
 	}
 	if (c->fog_enabled) {
 		GLfloat f = compute_fog_factor(c, v);
-		for (i = 0; i < 3; ++i)
+		for (i = 0; i < 3; ++i) {
 			v->color.v[i] = v->color.v[i] * f + c->fog_color[i] * (1.0f - f);
+		}
 	}
 	/* tex coords */
 #if TGL_OPTIMIZATION_HINT_BRANCH_COST < 1
@@ -359,8 +358,9 @@ void glopVertex(GLParam* p) {
 		if (n == 4) {
 			gl_draw_triangle(&c->vertex[0], &c->vertex[1], &c->vertex[2]);
 			gl_draw_triangle(&c->vertex[1], &c->vertex[3], &c->vertex[2]);
-			for (i = 0; i < 2; i++)
+			for (i = 0; i < 2; i++) {
 				c->vertex[i] = c->vertex[i + 2];
+			}
 			n = 2;
 		}
 		break;

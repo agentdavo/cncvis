@@ -223,30 +223,28 @@ void glopCopyTexImage2D(GLParam* p) {
 	data = c->current_texture->images[level].pixmap;
 	im->xsize = TGL_FEATURE_TEXTURE_DIM;
 	im->ysize = TGL_FEATURE_TEXTURE_DIM;
-	/* TODO implement the scaling and stuff that the GL spec says it should have.*/
-#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
-	for (j = 0; j < h; j++)
-		for (i = 0; i < w; i++) {
-			GLint src_x = (i + x) % c->zb->xsize;
-			GLint src_y = (j + y) % c->zb->ysize;
-			if (src_x < 0)
-				src_x += c->zb->xsize;
+	/* Simple memcpy when the region lies within the framebuffer */
+	if (x >= 0 && y >= 0 && x + w <= c->zb->xsize && y + h <= c->zb->ysize) {
+		PIXEL* src = c->zb->pbuf + y * c->zb->xsize + x;
+		for (j = 0; j < h; ++j) {
+			memcpy(data + j * w, src + j * c->zb->xsize, w * sizeof(PIXEL));
+		}
+	} else {
+		for (j = 0; j < h; ++j) {
+			int src_y = j + y;
+			src_y %= c->zb->ysize;
 			if (src_y < 0)
 				src_y += c->zb->ysize;
-			data[i + j * w] = c->zb->pbuf[src_x + src_y * c->zb->xsize];
+			PIXEL* src_line = c->zb->pbuf + src_y * c->zb->xsize;
+			for (i = 0; i < w; ++i) {
+				int src_x = i + x;
+				src_x %= c->zb->xsize;
+				if (src_x < 0)
+					src_x += c->zb->xsize;
+				data[i + j * w] = src_line[src_x];
+			}
 		}
-#else
-	for (j = 0; j < h; j++)
-		for (i = 0; i < w; i++) {
-			GLint src_x = (i + x) % c->zb->xsize;
-			GLint src_y = (j + y) % c->zb->ysize;
-			if (src_x < 0)
-				src_x += c->zb->xsize;
-			if (src_y < 0)
-				src_y += c->zb->ysize;
-			data[i + j * w] = c->zb->pbuf[src_x + src_y * c->zb->xsize];
-		}
-#endif
+	}
 }
 
 void glopTexImage1D(GLParam* p) {

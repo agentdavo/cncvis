@@ -108,6 +108,12 @@ void glopEnableDisable(GLParam* p) {
 	case GL_FOG:
 		c->fog_enabled = v;
 		break;
+	case GL_ALPHA_TEST:
+		c->alpha_test_enabled = v;
+		break;
+	case GL_STENCIL_TEST:
+		c->stencil_test_enabled = v;
+		break;
 	case GL_NORMALIZE:
 		c->normalize_enabled = v;
 		break;
@@ -333,14 +339,16 @@ void glAccum(GLenum op, GLfloat value) {
 }
 
 void glAlphaFunc(GLenum func, GLclampf ref) {
-	(void)func;
-	(void)ref;
+	GLContext* c = gl_get_context();
+	c->alpha_func = func;
+	c->alpha_ref = ref;
 }
 
 void glStencilFunc(GLenum func, GLint ref, GLuint mask) {
-	(void)func;
-	(void)ref;
-	(void)mask;
+	GLContext* c = gl_get_context();
+	c->stencil_func = func;
+	c->stencil_ref = ref;
+	c->stencil_mask = mask;
 }
 
 void glStencilOp(GLenum fail, GLenum zfail, GLenum zpass) {

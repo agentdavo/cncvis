@@ -316,6 +316,17 @@ typedef struct GLContext {
 	GLfloat fog_end;
 	GLfloat fog_color[4];
 
+	/* alpha test */
+	GLint alpha_test_enabled;
+	GLenum alpha_func;
+	GLclampf alpha_ref;
+
+	/* stencil test (no buffer present) */
+	GLint stencil_test_enabled;
+	GLenum stencil_func;
+	GLint stencil_ref;
+	GLuint stencil_mask;
+
 	/* opengl blending */
 
 	/* specular buffer. could probably be shared between contexts,
