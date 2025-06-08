@@ -32,7 +32,6 @@ GLboolean glAreTexturesResident(GLsizei n, const GLuint* textures, GLboolean* re
 	return retval;
 }
 GLboolean glIsTexture(GLuint texture) {
-	GLContext* c = gl_get_context();
 #define RETVAL GL_FALSE
 #include "error_check.h"
 	if (find_texture(texture))
@@ -162,14 +161,14 @@ void glopBindTexture(GLParam* p) {
 #define ERROR_FLAG GL_INVALID_ENUM
 #include "error_check.h"
 #else
-	
+
 #endif
 		t = find_texture(texture);
 	if (t == NULL) {
 		t = alloc_texture(texture);
 #include "error_check.h"
 	}
-	if (t == NULL) { 
+	if (t == NULL) {
 #if TGL_FEATURE_ERROR_CHECK == 1
 #define ERROR_FLAG GL_OUT_OF_MEMORY
 #include "error_check.h"
@@ -180,14 +179,7 @@ void glopBindTexture(GLParam* p) {
 	c->current_texture = t;
 }
 
-
-void glCopyTexImage2D(GLenum target,		 
-					  GLint level,			 
-					  GLenum internalformat, 
-					  GLint x,				 
-					  GLint y,				 
-					  GLsizei width,		 
-					  GLsizei height, GLint border) {
+void glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border) {
 	GLParam p[9];
 #include "error_check_no_context.h"
 
@@ -214,6 +206,7 @@ void glopCopyTexImage2D(GLParam* p) {
 	GLsizei h = p[7].i;
 	GLint border = p[8].i;
 	GLContext* c = gl_get_context();
+	/* convert GL coordinates to TinyGL's bottom-left origin */
 	y -= h;
 
 	if (c->readbuffer != GL_FRONT || c->current_texture == NULL || target != GL_TEXTURE_2D || border != 0 ||
@@ -230,21 +223,28 @@ void glopCopyTexImage2D(GLParam* p) {
 	data = c->current_texture->images[level].pixmap;
 	im->xsize = TGL_FEATURE_TEXTURE_DIM;
 	im->ysize = TGL_FEATURE_TEXTURE_DIM;
-	/* TODO implement the scaling and stuff that the GL spec says it should have.*/
-#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-	for (j = 0; j < h; j++)
-		for (i = 0; i < w; i++) {
-			data[i + j * w] = c->zb->pbuf[((i + x) % (c->zb->xsize)) + ((j + y) % (c->zb->ysize)) * (c->zb->xsize)];
+	/* Simple memcpy when the region lies within the framebuffer */
+	if (x >= 0 && y >= 0 && x + w <= c->zb->xsize && y + h <= c->zb->ysize) {
+		PIXEL* src = c->zb->pbuf + y * c->zb->xsize + x;
+		for (j = 0; j < h; ++j) {
+			memcpy(data + j * w, src + j * c->zb->xsize, w * sizeof(PIXEL));
 		}
-#else
-	for (j = 0; j < h; j++)
-		for (i = 0; i < w; i++) {
-			data[i + j * w] = c->zb->pbuf[((i + x) % (c->zb->xsize)) + ((j + y) % (c->zb->ysize)) * (c->zb->xsize)];
+	} else {
+		for (j = 0; j < h; ++j) {
+			int src_y = j + y;
+			src_y %= c->zb->ysize;
+			if (src_y < 0)
+				src_y += c->zb->ysize;
+			PIXEL* src_line = c->zb->pbuf + src_y * c->zb->xsize;
+			for (i = 0; i < w; ++i) {
+				int src_x = i + x;
+				src_x %= c->zb->xsize;
+				if (src_x < 0)
+					src_x += c->zb->xsize;
+				data[i + j * w] = src_line[src_x];
+			}
 		}
-#endif
+	}
 }
 
 void glopTexImage1D(GLParam* p) {
@@ -260,7 +260,7 @@ void glopTexImage1D(GLParam* p) {
 	void* pixels = p[8].p;
 	GLImage* im;
 	GLubyte* pixels1;
-	GLint do_free=0;
+	GLint do_free = 0;
 	GLContext* c = gl_get_context();
 	{
 #if TGL_FEATURE_ERROR_CHECK == 1
@@ -286,11 +286,11 @@ void glopTexImage1D(GLParam* p) {
 #endif
 		}
 		/* no GLinterpolation is done here to respect the original image aliasing ! */
-		
+
 		gl_resizeImageNoInterpolate(pixels1, TGL_FEATURE_TEXTURE_DIM, TGL_FEATURE_TEXTURE_DIM, pixels, width, height);
 		do_free = 1;
 		width = TGL_FEATURE_TEXTURE_DIM;
-		height = TGL_FEATURE_TEXTURE_DIM; 
+		height = TGL_FEATURE_TEXTURE_DIM;
 	} else {
 		pixels1 = pixels;
 	}
@@ -320,7 +320,7 @@ void glopTexImage2D(GLParam* p) {
 	void* pixels = p[9].p;
 	GLImage* im;
 	GLubyte* pixels1;
-	GLint do_free=0;
+	GLint do_free = 0;
 	GLContext* c = gl_get_context();
 	{
 #if TGL_FEATURE_ERROR_CHECK == 1
@@ -346,7 +346,7 @@ void glopTexImage2D(GLParam* p) {
 #endif
 		}
 		/* no GLinterpolation is done here to respect the original image aliasing ! */
-		
+
 		gl_resizeImageNoInterpolate(pixels1, TGL_FEATURE_TEXTURE_DIM, TGL_FEATURE_TEXTURE_DIM, pixels, width, height);
 		do_free = 1;
 		width = TGL_FEATURE_TEXTURE_DIM;

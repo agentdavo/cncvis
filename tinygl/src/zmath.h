@@ -4,7 +4,7 @@
 #include "../include/zfeatures.h"
 #include <math.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 /* Matrix & Vertex */
 
 typedef struct {
@@ -42,18 +42,15 @@ void gl_MulM3V3(V3* a, M4* b, V3* c);
 void gl_M4_MulV4(V4* a, M4* b, V4* c);
 void gl_M4_InvOrtho(M4* a, M4 b);
 void gl_M4_Inv(M4* a, M4* b);
-void gl_M4_Mul(M4* c, M4* a, M4* b);
-void gl_M4_MulLeft(M4* c, M4* a);
+void gl_M4_Mul(M4* restrict c, const M4* restrict a, const M4* restrict b);
+void gl_M4_MulLeft(M4* restrict c, const M4* restrict a);
 void gl_M4_Transpose(M4* a, M4* b);
 void gl_M4_Rotate(M4* c, GLfloat t, GLint u);
-
-
 
 V3 gl_V3_New(GLfloat x, GLfloat y, GLfloat z);
 V4 gl_V4_New(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
 GLint gl_Matrix_Inv(GLfloat* r, GLfloat* m, GLint n);
-
 
 #if TGL_FEATURE_FISR == 1
 static GLfloat fastInvSqrt(GLfloat x) {
@@ -70,11 +67,11 @@ static GLfloat fastInvSqrt(GLfloat x) {
 static int gl_V3_Norm_Fast(V3* a) {
 	GLfloat n;
 #if TGL_FEATURE_FISR == 1
-	n = fastInvSqrt(a->X * a->X + a->Y * a->Y + a->Z * a->Z); 
+	n = fastInvSqrt(a->X * a->X + a->Y * a->Y + a->Z * a->Z);
 	if (n > 1E+3)
 		return 1;
 #else
-	n = sqrt(a->X * a->X + a->Y * a->Y + a->Z * a->Z); 
+	n = sqrt(a->X * a->X + a->Y * a->Y + a->Z * a->Z);
 	if (n == 0)
 		return 1;
 	n = 1.0 / n;
@@ -85,4 +82,3 @@ static int gl_V3_Norm_Fast(V3* a) {
 	return 0;
 }
 #endif
-

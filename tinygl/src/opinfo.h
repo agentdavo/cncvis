@@ -44,16 +44,12 @@ ADD_OP(TexImage1D, 8, "%d %d  %d %d %d  %d %d %d")
 ADD_OP(CopyTexImage2D, 8, "%d %d %d %d  %d %d %d %d")
 ADD_OP(BindTexture, 2, "%C %d")
 
-
-
-
 ADD_OP(ShadeModel, 1, "%C")
 ADD_OP(CullFace, 1, "%C")
 ADD_OP(FrontFace, 1, "%C")
 ADD_OP(PolygonMode, 2, "%C %C")
 
 ADD_OP(CallList, 1, "%d")
-
 
 /* special opcodes */
 ADD_OP(EndList, 0, "")
@@ -70,6 +66,7 @@ ADD_OP(TexCoordPointer, 4, "%d %C %d %p")
 
 /* opengl 1.1 polygon offset */
 ADD_OP(PolygonOffset, 2, "%f %f")
+ADD_OP(Scissor, 4, "%d %d %d %d")
 
 /* blending */
 ADD_OP(BlendEquation, 1, "%d")

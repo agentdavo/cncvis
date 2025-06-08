@@ -15,7 +15,6 @@
 #define M_PI 3.1415926535897932384626433832795
 #endif
 
-
 enum {
 
 #define ADD_OP(a, b, c) OP_##a,
@@ -23,7 +22,6 @@ enum {
 #include "opinfo.h"
 
 };
-
 
 #if TGL_FEATURE_GL_POLYGON == 1
 
@@ -38,7 +36,6 @@ enum {
 /* # of entries in specular buffer */
 #define SPECULAR_BUFFER_SIZE 512
 /* specular buffer granularity */
-
 
 #define MAX_MODELVIEW_STACK_DEPTH 32
 #define MAX_PROJECTION_STACK_DEPTH 8
@@ -81,7 +78,7 @@ typedef struct GLLight {
 	GLfloat cos_spot_cutoff;
 
 	/* we use a linked list to know which are the enabled lights */
-	
+
 	struct GLLight *next, *prev;
 	GLubyte enabled;
 } GLLight;
@@ -102,7 +99,7 @@ typedef struct GLViewport {
 	V3 scale;
 	V3 trans;
 	GLint xmin, ymin, xsize, ysize;
-	
+
 } GLViewport;
 
 typedef union {
@@ -265,7 +262,7 @@ typedef struct GLContext {
 	GLenum drawbuffer;
 	GLenum readbuffer;
 	/* feedback */
-	
+
 #if TGL_FEATURE_ALT_RENDERMODES == 1
 
 	GLuint feedback_size;
@@ -304,8 +301,33 @@ typedef struct GLContext {
 	GLfloat offset_units;
 	GLint offset_states;
 
+	/* scissor */
+	GLint scissor_enabled;
+	GLint scissor_x;
+	GLint scissor_y;
+	GLint scissor_width;
+	GLint scissor_height;
+
+	/* opengl 1.1 fog */
+	GLint fog_enabled;
+	GLint fog_mode;
+	GLfloat fog_density;
+	GLfloat fog_start;
+	GLfloat fog_end;
+	GLfloat fog_color[4];
+
+	/* alpha test */
+	GLint alpha_test_enabled;
+	GLenum alpha_func;
+	GLclampf alpha_ref;
+
+	/* stencil test (no buffer present) */
+	GLint stencil_test_enabled;
+	GLenum stencil_func;
+	GLint stencil_ref;
+	GLuint stencil_mask;
+
 	/* opengl blending */
-	
 
 	/* specular buffer. could probably be shared between contexts,
 	  but that wouldn't be 100% thread safe */
@@ -314,7 +336,7 @@ typedef struct GLContext {
 	GLint specbuf_used_counter;
 	GLint specbuf_num_buffers;
 #endif
-	GLint zEnableSpecular; 
+	GLint zEnableSpecular;
 
 	/* raster position */
 	GLint rasterpos_zz;
@@ -392,9 +414,6 @@ static GLfloat clampf(GLfloat a, GLfloat min, GLfloat max) {
 		return a;
 }
 
-
-
-
 /* triangle */
 
 /*
@@ -406,16 +425,14 @@ static GLfloat clampf(GLfloat a, GLfloat min, GLfloat max) {
  * of the GLintersection if x=a+t(b-a).
  */
 
-
-
 void gl_draw_triangle(GLVertex* p0, GLVertex* p1, GLVertex* p2);
 void gl_draw_line(GLVertex* p0, GLVertex* p1);
 void gl_draw_point(GLVertex* p0);
 
-void gl_draw_triangle_point(GLVertex* p0, GLVertex* p1, GLVertex* p2);	
-void gl_draw_triangle_line(GLVertex* p0, GLVertex* p1, GLVertex* p2);	
-void gl_draw_triangle_fill(GLVertex* p0, GLVertex* p1, GLVertex* p2);	
-void gl_draw_triangle_select(GLVertex* p0, GLVertex* p1, GLVertex* p2); 
+void gl_draw_triangle_point(GLVertex* p0, GLVertex* p1, GLVertex* p2);
+void gl_draw_triangle_line(GLVertex* p0, GLVertex* p1, GLVertex* p2);
+void gl_draw_triangle_fill(GLVertex* p0, GLVertex* p1, GLVertex* p2);
+void gl_draw_triangle_select(GLVertex* p0, GLVertex* p1, GLVertex* p2);
 void gl_draw_triangle_feedback(GLVertex* p0, GLVertex* p1, GLVertex* p2);
 
 /* matrix.c */
@@ -438,14 +455,10 @@ void gl_convertRGB_to_8A8R8G8B(GLuint* pixmap, GLubyte* rgb, GLint xsize, GLint 
 void gl_resizeImage(GLubyte* dest, GLint xsize_dest, GLint ysize_dest, GLubyte* src, GLint xsize_src, GLint ysize_src);
 void gl_resizeImageNoInterpolate(GLubyte* dest, GLint xsize_dest, GLint ysize_dest, GLubyte* src, GLint xsize_src, GLint ysize_src);
 
-
-
 void gl_fatal_error(char* format, ...);
 
 /* specular buffer "api" */
 GLSpecBuf* specbuf_get_buffer(const GLint shininess_i, const GLfloat shininess);
-
-
 
 /* glopXXX functions */
 
