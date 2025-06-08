@@ -58,7 +58,7 @@ void glopRasterPos(GLParam* p) {
 		c->rasterpos.v[1] = v.zp.y;
 		c->rastervertex = v;
 		/* c->rasterpos.v[2] = v.zp.z;*/
-		c->rasterpos_zz = v.zp.z >> ZB_POINT_Z_FRAC_BITS; 
+		c->rasterpos_zz = v.zp.z >> ZB_POINT_Z_FRAC_BITS;
 		c->rasterposvalid = 1;
 	} else
 		c->rasterposvalid = 0;
@@ -102,7 +102,7 @@ void glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, voi
 void glopDrawPixels(GLParam* p) {
 	GLContext* c = gl_get_context();
 	GLint sy, sx, ty, tx;
-	
+
 	GLint w = p[1].i;
 	GLint h = p[2].i;
 	V4 rastpos = c->rasterpos;
@@ -119,6 +119,31 @@ void glopDrawPixels(GLParam* p) {
 	GLfloat pzoomy = c->pzoomy;
 
 	GLint zz = c->rasterpos_zz;
+
+	/* fast path when pixel zoom is 1:1 */
+	if (pzoomx == 1.0f && pzoomy == 1.0f) {
+		for (sy = 0; sy < h; ++sy) {
+			int ty = (int)(rastpos.v[1] - ((GLfloat)(h - sy)));
+			if (ty < 0 || ty >= th)
+				continue;
+			GLushort* pzrow = zbuf + ty * tw;
+			PIXEL* dst = pbuf + ty * tw;
+			PIXEL* src = d + sy * w;
+			int tx_base = (int)rastpos.v[0];
+			for (sx = 0; sx < w; ++sx) {
+				int tx = tx_base + sx;
+				if (tx >= 0 && tx < tw) {
+					GLushort* pz = pzrow + tx;
+					if (ZCMP(zz, *pz)) {
+						dst[tx] = src[sx];
+						if (zbdw)
+							*pz = zz;
+					}
+				}
+			}
+		}
+		return;
+	}
 #if TGL_FEATURE_BLEND_DRAW_PIXELS == 1
 	TGL_BLEND_VARS
 #endif
@@ -127,8 +152,9 @@ void glopDrawPixels(GLParam* p) {
 	GLuint zbeb = zb->enable_blend;
 #endif
 #endif
-	if (!c->rasterposvalid)return;
-	
+	if (!c->rasterposvalid)
+		return;
+
 #if TGL_FEATURE_ALT_RENDERMODES == 1
 	if (c->render_mode == GL_SELECT) {
 		gl_add_select(zz, zz);
@@ -141,9 +167,6 @@ void glopDrawPixels(GLParam* p) {
 
 #if TGL_FEATURE_MULTITHREADED_DRAWPIXELS == 1
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
 	for (sy = 0; sy < h; sy++)
 		for (sx = 0; sx < w; sx++) {
 			PIXEL col = d[sy * w + sx];

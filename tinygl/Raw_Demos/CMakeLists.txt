@@ -6,7 +6,7 @@ endif(TARGET tinygl)
 
 if(TINYGL_LIB)
 
-  set(raw_names gears t2i bigfont)
+  set(raw_names gears t2i bigfont benchmark)
   foreach(DEMO ${raw_names})
     set(DEMO_NAME "raw_${DEMO}")
     add_executable(${DEMO_NAME} ${DEMO}.c)

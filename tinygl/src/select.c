@@ -2,7 +2,11 @@
 
 GLint glRenderMode(GLint mode) {
 	GLContext* c = gl_get_context();
+#if TGL_FEATURE_ALT_RENDERMODES == 1
 	GLint result = 0;
+#else
+	(void)c;
+#endif
 #if TGL_FEATURE_ALT_RENDERMODES == 1
 	switch (c->render_mode) {
 	case GL_RENDER:
@@ -77,7 +81,7 @@ GLint glRenderMode(GLint mode) {
 	}
 	return result;
 #else
-	
+
 	return 0;
 #endif
 }
@@ -173,17 +177,17 @@ void gl_add_feedback(GLfloat token, GLVertex* v1, GLVertex* v2, GLVertex* v3, GL
 		break;
 	}
 	if (token == GL_PASS_THROUGH_TOKEN)
-		feedback_hits_needed = 1 + 1; 
+		feedback_hits_needed = 1 + 1;
 	else if (token == GL_POINT_TOKEN)
-		feedback_hits_needed = 1 + 1 * vertex_feedback_hits_needed; 
+		feedback_hits_needed = 1 + 1 * vertex_feedback_hits_needed;
 	else if (token == GL_LINE_TOKEN || token == GL_LINE_RESET_TOKEN)
-		feedback_hits_needed = 1 + 2 * vertex_feedback_hits_needed; 
+		feedback_hits_needed = 1 + 2 * vertex_feedback_hits_needed;
 	else if (token == GL_POLYGON_TOKEN)
-		feedback_hits_needed = 1 + 1 + 3 * vertex_feedback_hits_needed; 
+		feedback_hits_needed = 1 + 1 + 3 * vertex_feedback_hits_needed;
 	else if (token == GL_BITMAP_TOKEN)
-		feedback_hits_needed = 1 + 1 * vertex_feedback_hits_needed; 
+		feedback_hits_needed = 1 + 1 * vertex_feedback_hits_needed;
 	else if (token == GL_DRAW_PIXEL_TOKEN || token == GL_COPY_PIXEL_TOKEN)
-		feedback_hits_needed = 1 + 1 * vertex_feedback_hits_needed; 
+		feedback_hits_needed = 1 + 1 * vertex_feedback_hits_needed;
 	else
 		return;
 	c->feedback_hits += feedback_hits_needed;
@@ -192,7 +196,7 @@ void gl_add_feedback(GLfloat token, GLVertex* v1, GLVertex* v2, GLVertex* v3, GL
 		c->feedback_hits -= feedback_hits_needed;
 		return;
 	}
-	
+
 #if TGL_FEATURE_ERROR_CHECK == 1
 #define DONE_ERROR_CHECK                                                                                                                                       \
 	{                                                                                                                                                          \
@@ -290,7 +294,7 @@ void glopPushName(GLParam* p) {
 #if TGL_FEATURE_ALT_RENDERMODES == 1
 	GLContext* c = gl_get_context();
 	if (c->render_mode == GL_SELECT) {
-		
+
 		c->name_stack[c->name_stack_size++] = p[1].i;
 		c->select_hit = NULL;
 	}
@@ -301,7 +305,7 @@ void glopPopName(GLParam* p) {
 #if TGL_FEATURE_ALT_RENDERMODES == 1
 	GLContext* c = gl_get_context();
 	if (c->render_mode == GL_SELECT) {
-		
+
 		c->name_stack_size--;
 		c->select_hit = NULL;
 	}
@@ -312,7 +316,7 @@ void glopLoadName(GLParam* p) {
 #if TGL_FEATURE_ALT_RENDERMODES == 1
 	GLContext* c = gl_get_context();
 	if (c->render_mode == GL_SELECT) {
-		
+
 		c->name_stack[c->name_stack_size - 1] = p[1].i;
 		c->select_hit = NULL;
 	}
@@ -328,7 +332,7 @@ void gl_add_select(GLuint zmin, GLuint zmax) {
 	if (!c->select_overflow) {
 		if (c->select_hit == NULL) {
 			n = c->name_stack_size;
-			if ((c->select_ptr - c->select_buffer + 3 + n) > c->select_size) { 
+			if ((c->select_ptr - c->select_buffer + 3 + n) > c->select_size) {
 				c->select_overflow = 1;
 			} else {
 				ptr = c->select_ptr;

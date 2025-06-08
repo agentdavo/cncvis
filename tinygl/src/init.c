@@ -73,12 +73,14 @@ static int TinyGLRuntimeCompatibilityTest() {
 	GLfloat t = -0, tf2;
 	GLint t2 = 1 << 31;
 	memcpy(&tf2, &t2, 4);
-	if (tf2 != t) return 1;
-	t2 = 3212836864;
+	if (tf2 != t)
+		return 1;
+	t2 = 0xbf800000u;
 	t = -1;
 	memcpy(&tf2, &t2, 4);
-	if (tf2 != t)return 1;
-	
+	if (tf2 != t)
+		return 1;
+
 	if (((GLint)255 << 8) != 65280)
 		return 1;
 	if ((GLint)65280 >> 8 != 255)
@@ -135,7 +137,7 @@ static int TinyGLRuntimeCompatibilityTest() {
 	{
 		GLint i, j;
 		for (i = 0; i < 10; i++) {
-			GLubyte* data = gl_zalloc(1024); 
+			GLubyte* data = gl_zalloc(1024);
 			if (!data)
 				return 1;
 			for (j = 0; j < 1024; j++)
@@ -236,7 +238,7 @@ void glInit(void* zbuffer1) {
 
 	/* textures */
 	/*glInitTextures(c);*/
-	glInitTextures(); //Bug Fix!
+	glInitTextures(); // Bug Fix!
 
 	/* blending */
 	c->zb->enable_blend = 0;
@@ -323,6 +325,31 @@ void glInit(void* zbuffer1) {
 
 	/* opengl 1.1 polygon offset */
 	c->offset_states = 0;
+
+	/* scissor */
+	c->scissor_enabled = 0;
+	c->scissor_x = 0;
+	c->scissor_y = 0;
+	c->scissor_width = v->xsize;
+	c->scissor_height = v->ysize;
+
+	/* opengl 1.1 fog */
+	c->fog_enabled = 0;
+	c->fog_mode = GL_LINEAR;
+	c->fog_density = 1.0f;
+	c->fog_start = 0.0f;
+	c->fog_end = 1.0f;
+	for (i = 0; i < 4; i++)
+		c->fog_color[i] = 0.0f;
+
+	c->alpha_test_enabled = 0;
+	c->alpha_func = GL_ALWAYS;
+	c->alpha_ref = 0.0f;
+
+	c->stencil_test_enabled = 0;
+	c->stencil_func = GL_ALWAYS;
+	c->stencil_ref = 0;
+	c->stencil_mask = 0xFFFFFFFFu;
 
 	/* clear the resize callback function pointer */
 	c->gl_resize_viewport = NULL;
