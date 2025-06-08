@@ -1,4 +1,4 @@
-# cncvis: Lightweight CNC Machine Visualization
+#cncvis : Lightweight CNC Machine Visualization
 
 `cncvis` is a compact C library for rendering and animating CNC machines.
 It parses an XML description of the machine, loads STL files for the
@@ -17,6 +17,10 @@ included in subdirectories.
 - **Camera API** – orbit, pan, zoom and preset views.
 - **On-screen display** – draw text and simple shapes over the 3D view.
 - **C11 vector math** – use `chad_math.h` for aligned calculations.
+- **Lock-step threading** – `lockstepthread.h` runs a worker thread in
+  deterministic steps.
+- **32-bit ARGB pixel quads** – color buffers use 4‑pixel blocks aligned to
+  16 bytes for LVGL‑friendly transfers.
 - **XML configuration** – define machines and scene properties in one file.
 
 ## Directory layout
@@ -32,7 +36,7 @@ cncvis/
 
 ## Building
 
-The library is built using CMake and requires a C compiler with C99
+The library is built using CMake and requires a C compiler with C11
 support. The following commands build `libcncvis.a` and several TinyGL
 sample programs:
 
@@ -114,14 +118,14 @@ looks like:
 #include "api.h"
 
 int main(void) {
-    if (cncvis_init("machines/meca500/config.xml") != 0)
-        return 1;         // load machine and prepare renderer
+  if (cncvis_init("machines/meca500/config.xml") != 0)
+    return 1; // load machine and prepare renderer
 
-    // render a single frame (normally done every loop)
-    cncvis_render();
+  // render a single frame (normally done every loop)
+  cncvis_render();
 
-    cncvis_cleanup();
-    return 0;
+  cncvis_cleanup();
+  return 0;
 }
 ```
 

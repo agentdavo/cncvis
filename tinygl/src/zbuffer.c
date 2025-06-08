@@ -301,7 +301,7 @@ static void ZB_copyFrameBufferRGB24(ZBuffer * zb,
 
 #if TGL_FEATURE_RENDER_BITS == 16
 
-void ZB_copyFrameBuffer(ZBuffer* zb, void* buf, GLint linesize) { ZB_copyBuffer(zb, buf, linesize); }
+void ZB_copyFrameBuffer(ZBuffer* restrict zb, void* restrict buf, GLint linesize) { ZB_copyBuffer(zb, buf, linesize); }
 
 #endif
 /*^ TGL_FEATURE_RENDER_BITS == 16 */
@@ -310,7 +310,7 @@ void ZB_copyFrameBuffer(ZBuffer* zb, void* buf, GLint linesize) { ZB_copyBuffer(
 
 #define RGB32_TO_RGB16(v) (((v >> 8) & 0xf800) | (((v) >> 5) & 0x07e0) | (((v) & 0xff) >> 3))
 
-void ZB_copyFrameBuffer(ZBuffer* zb, void* buf, GLint linesize) { ZB_copyBuffer(zb, buf, linesize); }
+void ZB_copyFrameBuffer(ZBuffer* restrict zb, void* restrict buf, GLint linesize) { ZB_copyBuffer(zb, buf, linesize); }
 
 #endif
 /* ^TGL_FEATURE_RENDER_BITS == 32 */
@@ -318,7 +318,7 @@ void ZB_copyFrameBuffer(ZBuffer* zb, void* buf, GLint linesize) { ZB_copyBuffer(
 /*
  * adr must be aligned on an 'int'
  */
-static void memset_custom_s(void* adr, GLint val, GLint count) {
+static inline void memset_custom_s(void* restrict adr, GLint val, GLint count) {
 	GLint i, n, v;
 	GLuint* p;
 	GLushort* q;
@@ -342,25 +342,19 @@ static void memset_custom_s(void* adr, GLint val, GLint count) {
 }
 
 /* Used in 32 bit mode*/
-static void memset_l(void* adr, GLint val, GLint count) {
-	GLint i, n, v;
-	GLuint* p;
-	p = adr;
-	v = val;
-	n = count >> 2;
-	for (i = 0; i < n; i++) {
-		p[0] = v;
-		p[1] = v;
-		p[2] = v;
-		p[3] = v;
-		p += 4;
+static inline void memset_l(void* restrict adr, GLint val, GLint count) {
+	PixelQuad quad = {.px = {val, val, val, val}};
+	PixelQuad* restrict q = adr;
+	GLint n = count >> 2;
+	for (GLint i = 0; i < n; i++) {
+		q[i] = quad;
 	}
-	n = count & 3;
-	for (i = 0; i < n; i++)
-		*p++ = val;
+	GLuint* restrict tail = (GLuint*)(q + n);
+	for (GLint i = 0; i < (count & 3); i++)
+		*tail++ = val;
 }
 
-void ZB_clear(ZBuffer* zb, GLint clear_z, GLint z, GLint clear_color, GLint r, GLint g, GLint b) {
+void ZB_clear(ZBuffer* restrict zb, GLint clear_z, GLint z, GLint clear_color, GLint r, GLint g, GLint b) {
 	GLuint color;
 	GLint y;
 	PIXEL* pp;

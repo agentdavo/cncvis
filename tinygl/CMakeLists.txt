@@ -5,11 +5,11 @@ project(tinygl
   LANGUAGES C
   )
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -fopenmp")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
 
 # Set relative output directory paths, if not already defined
 if (NOT BIN_DIR)

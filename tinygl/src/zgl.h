@@ -120,7 +120,7 @@ typedef struct GLList {
 	/* TODO: extensions for an hash table or a better allocating scheme */
 } GLList;
 
-typedef struct GLVertex {
+typedef struct __attribute__((aligned(16))) GLVertex {
 
 	V3 normal;
 	V4 coord;
