@@ -1,14 +1,47 @@
 /*
-
  * Z buffer: 16 bits Z / 16 bits color
- *
  */
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "../include/zbuffer.h"
 #include "msghandling.h"
+#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
+#define LOCKSTEPTHREAD_IMPL
+#include "../include-demo/lockstepthread.h"
+#endif
+
+#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
+static lsthread copy_thread;
+typedef struct {
+	PIXEL* src;
+	PIXEL* dst;
+	GLint width;
+	GLint stride;
+	GLint lines;
+} CopyJob;
+static CopyJob copy_job;
+
+static void copy_job_func(void* arg) {
+	CopyJob* job = (CopyJob*)arg;
+	for (GLint y = 0; y < job->lines; ++y) {
+		PixelQuad* restrict s = (PixelQuad*)(job->src + y * job->width);
+		PixelQuad* restrict d = (PixelQuad*)((GLbyte*)job->dst + y * job->stride);
+		GLint n = job->width >> 2;
+		for (GLint i = 0; i < n; ++i) {
+			d[i] = s[i];
+		}
+	}
+}
+#endif
 ZBuffer* ZB_open(GLint xsize, GLint ysize, GLint mode,
 
 				 void* frame_buffer) {
@@ -57,6 +90,12 @@ ZBuffer* ZB_open(GLint xsize, GLint ysize, GLint mode,
 	}
 
 	zb->current_texture = NULL;
+#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
+	init_lsthread(&copy_thread);
+	copy_thread.execute = copy_job_func;
+	copy_thread.argument = &copy_job;
+	start_lsthread(&copy_thread);
+#endif
 
 	return zb;
 error:
@@ -68,6 +107,11 @@ void ZB_close(ZBuffer* zb) {
 
 	if (zb->frame_buffer_allocated)
 		gl_free(zb->pbuf);
+
+#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
+	kill_lsthread(&copy_thread);
+	destroy_lsthread(&copy_thread);
+#endif
 
 	gl_free(zb->zbuf);
 	gl_free(zb);
@@ -112,57 +156,44 @@ PIXEL pxReverse32(PIXEL x) {
 }
 #endif
 
+static inline void copy_rows(PIXEL* restrict src, PIXEL* restrict dst, GLint lines, GLint width, GLint stride) {
+	for (GLint y = 0; y < lines; ++y) {
+		PixelQuad* restrict s = (PixelQuad*)(src + y * width);
+		PixelQuad* restrict d = (PixelQuad*)((GLbyte*)dst + y * stride);
+		GLint n = width >> 2;
+#if TGL_FEATURE_NO_COPY_COLOR == 1
+		for (GLint i = 0; i < n; ++i) {
+			PixelQuad q = s[i];
+			if ((q.px[0] & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				d[i].px[0] = q.px[0];
+			if ((q.px[1] & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				d[i].px[1] = q.px[1];
+			if ((q.px[2] & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				d[i].px[2] = q.px[2];
+			if ((q.px[3] & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				d[i].px[3] = q.px[3];
+		}
+#else
+		for (GLint i = 0; i < n; ++i)
+			d[i] = s[i];
+#endif
+	}
+}
+
 static void ZB_copyBuffer(ZBuffer* restrict zb, void* restrict buf, GLint linesize) {
-	GLint y;
-#if TGL_FEATURE_NO_COPY_COLOR == 1
-	GLint i;
-#endif
+	GLint half = zb->ysize;
 #if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
-	for (y = 0; y < zb->ysize; y++) {
-		PIXEL* restrict q = zb->pbuf + y * zb->xsize;
-		PIXEL* restrict p1 = (PIXEL*)((GLbyte*)buf + y * linesize);
-#if TGL_FEATURE_NO_COPY_COLOR == 1
-		for (i = 0; i < zb->xsize; i += 4) {
-			PIXEL v0 = q[i];
-			PIXEL v1 = q[i + 1];
-			PIXEL v2 = q[i + 2];
-			PIXEL v3 = q[i + 3];
-			if ((v0 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				p1[i] = v0;
-			if ((v1 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				p1[i + 1] = v1;
-			if ((v2 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				p1[i + 2] = v2;
-			if ((v3 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				p1[i + 3] = v3;
-		}
-#else
-		memcpy(p1, q, linesize);
+	half = zb->ysize / 2;
+	copy_job.src = zb->pbuf + half * zb->xsize;
+	copy_job.dst = (PIXEL*)((GLbyte*)buf + half * linesize);
+	copy_job.width = zb->xsize;
+	copy_job.stride = linesize;
+	copy_job.lines = zb->ysize - half;
+	step(&copy_thread);
 #endif
-	}
-#else
-	for (y = 0; y < zb->ysize; y++) {
-		PIXEL* restrict q = zb->pbuf + y * zb->xsize;
-		PIXEL* restrict p1 = (PIXEL*)((GLbyte*)buf + y * linesize);
-#if TGL_FEATURE_NO_COPY_COLOR == 1
-		for (i = 0; i < zb->xsize; i += 4) {
-			PIXEL v0 = q[i];
-			PIXEL v1 = q[i + 1];
-			PIXEL v2 = q[i + 2];
-			PIXEL v3 = q[i + 3];
-			if ((v0 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				p1[i] = v0;
-			if ((v1 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				p1[i + 1] = v1;
-			if ((v2 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				p1[i + 2] = v2;
-			if ((v3 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				p1[i + 3] = v3;
-		}
-#else
-		memcpy(p1, q, linesize);
-#endif
-	}
+	copy_rows(zb->pbuf, buf, half, zb->xsize, linesize);
+#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
+	lock(&copy_thread);
 #endif
 }
 
@@ -301,7 +332,7 @@ static void ZB_copyFrameBufferRGB24(ZBuffer * zb,
 
 #if TGL_FEATURE_RENDER_BITS == 16
 
-void ZB_copyFrameBuffer(ZBuffer* zb, void* buf, GLint linesize) { ZB_copyBuffer(zb, buf, linesize); }
+void ZB_copyFrameBuffer(ZBuffer* restrict zb, void* restrict buf, GLint linesize) { ZB_copyBuffer(zb, buf, linesize); }
 
 #endif
 /*^ TGL_FEATURE_RENDER_BITS == 16 */
@@ -310,7 +341,7 @@ void ZB_copyFrameBuffer(ZBuffer* zb, void* buf, GLint linesize) { ZB_copyBuffer(
 
 #define RGB32_TO_RGB16(v) (((v >> 8) & 0xf800) | (((v) >> 5) & 0x07e0) | (((v) & 0xff) >> 3))
 
-void ZB_copyFrameBuffer(ZBuffer* zb, void* buf, GLint linesize) { ZB_copyBuffer(zb, buf, linesize); }
+void ZB_copyFrameBuffer(ZBuffer* restrict zb, void* restrict buf, GLint linesize) { ZB_copyBuffer(zb, buf, linesize); }
 
 #endif
 /* ^TGL_FEATURE_RENDER_BITS == 32 */
@@ -318,7 +349,7 @@ void ZB_copyFrameBuffer(ZBuffer* zb, void* buf, GLint linesize) { ZB_copyBuffer(
 /*
  * adr must be aligned on an 'int'
  */
-static void memset_custom_s(void* adr, GLint val, GLint count) {
+static inline void memset_custom_s(void* restrict adr, GLint val, GLint count) {
 	GLint i, n, v;
 	GLuint* p;
 	GLushort* q;
@@ -342,25 +373,19 @@ static void memset_custom_s(void* adr, GLint val, GLint count) {
 }
 
 /* Used in 32 bit mode*/
-static void memset_l(void* adr, GLint val, GLint count) {
-	GLint i, n, v;
-	GLuint* p;
-	p = adr;
-	v = val;
-	n = count >> 2;
-	for (i = 0; i < n; i++) {
-		p[0] = v;
-		p[1] = v;
-		p[2] = v;
-		p[3] = v;
-		p += 4;
+static inline void memset_l(void* restrict adr, GLint val, GLint count) {
+	PixelQuad quad = {.px = {val, val, val, val}};
+	PixelQuad* restrict q = adr;
+	GLint n = count >> 2;
+	for (GLint i = 0; i < n; i++) {
+		q[i] = quad;
 	}
-	n = count & 3;
-	for (i = 0; i < n; i++)
-		*p++ = val;
+	GLuint* restrict tail = (GLuint*)(q + n);
+	for (GLint i = 0; i < (count & 3); i++)
+		*tail++ = val;
 }
 
-void ZB_clear(ZBuffer* zb, GLint clear_z, GLint z, GLint clear_color, GLint r, GLint g, GLint b) {
+void ZB_clear(ZBuffer* restrict zb, GLint clear_z, GLint z, GLint clear_color, GLint r, GLint g, GLint b) {
 	GLuint color;
 	GLint y;
 	PIXEL* pp;
