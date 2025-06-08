@@ -16,6 +16,7 @@ included in subdirectories.
 - **Lighting** – configure multiple OpenGL style lights.
 - **Camera API** – orbit, pan, zoom and preset views.
 - **On-screen display** – draw text and simple shapes over the 3D view.
+- **C11 vector math** – use `chad_math.h` for aligned calculations.
 - **XML configuration** – define machines and scene properties in one file.
 
 ## Directory layout

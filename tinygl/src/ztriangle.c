@@ -2,11 +2,8 @@
 #include "msghandling.h"
 #include <stdlib.h>
 
-
-
-
 /* TODO: Switch from scanline rasterizer to easily parallelized cross product rasterizer.*/
-static GLfloat edgeFunction(GLfloat ax, GLfloat ay, GLfloat bx, GLfloat by, GLfloat cx, GLfloat cy) {
+static inline GLfloat edgeFunction(GLfloat ax, GLfloat ay, GLfloat bx, GLfloat by, GLfloat cx, GLfloat cy) {
 	return (cx - ax) * (by - ay) - (cy - ay) * (bx - ax);
 }
 
@@ -58,9 +55,10 @@ void ZB_fillTriangleFlat(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1, ZBuffe
 
 #define INTERP_Z
 
-
 #define DRAW_INIT()                                                                                                                                            \
-	{ color = RGB_TO_PIXEL(p2->r, p2->g, p2->b); }
+	{                                                                                                                                                          \
+		color = RGB_TO_PIXEL(p2->r, p2->g, p2->b);                                                                                                             \
+	}
 
 #define PUT_PIXEL(_a)                                                                                                                                          \
 	{                                                                                                                                                          \
@@ -90,7 +88,8 @@ void ZB_fillTriangleFlatNOBLEND(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1,
 #define INTERP_Z
 
 #define DRAW_INIT()                                                                                                                                            \
-	{}
+	{                                                                                                                                                          \
+	}
 
 #define PUT_PIXEL(_a)                                                                                                                                          \
 	{                                                                                                                                                          \
@@ -126,7 +125,8 @@ void ZB_fillTriangleSmooth(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1, ZBuf
 
 #if TGL_FEATURE_RENDER_BITS == 32
 #define DRAW_INIT()                                                                                                                                            \
-	{}
+	{                                                                                                                                                          \
+	}
 #define PUT_PIXEL(_a)                                                                                                                                          \
 	{                                                                                                                                                          \
 		{                                                                                                                                                      \
@@ -144,11 +144,11 @@ void ZB_fillTriangleSmooth(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1, ZBuf
 		ob1 += dbdx;                                                                                                                                           \
 	}
 
-
 #elif TGL_FEATURE_RENDER_BITS == 16
 
 #define DRAW_INIT()                                                                                                                                            \
-	{}
+	{                                                                                                                                                          \
+	}
 
 #define PUT_PIXEL(_a)                                                                                                                                          \
 	{                                                                                                                                                          \
@@ -171,7 +171,7 @@ void ZB_fillTriangleSmooth(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1, ZBuf
 #endif
 
 #include "ztriangle.h"
-} 
+}
 
 void ZB_fillTriangleSmoothNOBLEND(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1, ZBufferPoint* p2) {
 
@@ -186,7 +186,8 @@ void ZB_fillTriangleSmoothNOBLEND(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p
 
 #if TGL_FEATURE_RENDER_BITS == 32
 #define DRAW_INIT()                                                                                                                                            \
-	{}
+	{                                                                                                                                                          \
+	}
 
 #if TGL_FEATURE_NO_DRAW_COLOR != 1
 #define PUT_PIXEL(_a)                                                                                                                                          \
@@ -226,7 +227,8 @@ void ZB_fillTriangleSmoothNOBLEND(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p
 #elif TGL_FEATURE_RENDER_BITS == 16
 
 #define DRAW_INIT()                                                                                                                                            \
-	{}
+	{                                                                                                                                                          \
+	}
 
 #define PUT_PIXEL(_a)                                                                                                                                          \
 	{                                                                                                                                                          \
@@ -248,20 +250,19 @@ void ZB_fillTriangleSmoothNOBLEND(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p
 #endif
 /* End of 16 bit mode stuff*/
 #include "ztriangle.h"
-} 
+}
 
 /*
 
 
 			TEXTURE MAPPED TRIANGLES
-               Section_Header
+			   Section_Header
 
 
 
 
 */
 void ZB_setTexture(ZBuffer* zb, PIXEL* texture) { zb->current_texture = texture; }
-
 
 #if 1
 
@@ -327,7 +328,7 @@ void ZB_setTexture(ZBuffer* zb, PIXEL* texture) { zb->current_texture = texture;
 				n -= 1;                                                                                                                                        \
 			}                                                                                                                                                  \
 		}                                                                                                                                                      \
-	} 
+	}
 
 void ZB_fillTriangleMappingPerspective(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1, ZBufferPoint* p2) {
 	PIXEL* texture;
@@ -339,7 +340,6 @@ void ZB_fillTriangleMappingPerspective(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoi
 #define INTERP_Z
 #define INTERP_STZ
 #define INTERP_RGB
-
 
 #define NB_INTERP 8
 
@@ -363,7 +363,7 @@ void ZB_fillTriangleMappingPerspective(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoi
 	ob1 += dbdx;
 #else
 #define OR1OG1OB1DECL /*A comment*/
-#define OR1G1B1INCR   /*Another comment*/
+#define OR1G1B1INCR	  /*Another comment*/
 #define or1 COLOR_MULT_MASK
 #define og1 COLOR_MULT_MASK
 #define ob1 COLOR_MULT_MASK
@@ -405,14 +405,16 @@ void ZB_fillTriangleMappingPerspective(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoi
 	}
 #endif
 #define DRAW_LINE()                                                                                                                                            \
-	{ DRAW_LINE_TRI_TEXTURED() }
+	{                                                                                                                                                          \
+		DRAW_LINE_TRI_TEXTURED()                                                                                                                               \
+	}
 
 #include "ztriangle.h"
 }
 
 void ZB_fillTriangleMappingPerspectiveNOBLEND(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1, ZBufferPoint* p2) {
 	PIXEL* texture;
-	
+
 	GLubyte zbdw = zb->depth_write;
 	GLubyte zbdt = zb->depth_test;
 	TGL_STIPPLEVARS
@@ -442,7 +444,7 @@ void ZB_fillTriangleMappingPerspectiveNOBLEND(ZBuffer* zb, ZBufferPoint* p0, ZBu
 	ob1 += dbdx;
 #else
 #define OR1OG1OB1DECL /*A comment*/
-#define OR1G1B1INCR   /*Another comment*/
+#define OR1G1B1INCR	  /*Another comment*/
 #define or1 COLOR_MULT_MASK
 #define og1 COLOR_MULT_MASK
 #define ob1 COLOR_MULT_MASK
@@ -483,8 +485,10 @@ void ZB_fillTriangleMappingPerspectiveNOBLEND(ZBuffer* zb, ZBufferPoint* p0, ZBu
 	}
 #endif
 #define DRAW_LINE()                                                                                                                                            \
-	{ DRAW_LINE_TRI_TEXTURED() }
+	{                                                                                                                                                          \
+		DRAW_LINE_TRI_TEXTURED()                                                                                                                               \
+	}
 #include "ztriangle.h"
 }
 
-#endif 
+#endif

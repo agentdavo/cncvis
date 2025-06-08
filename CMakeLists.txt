@@ -33,6 +33,7 @@ add_library(cncvis STATIC
 target_include_directories(cncvis PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${TGL_DIR}/include
+    ${TGL_DIR}/include-demo
     ${STLIO_DIR}/include
     ${STB_DIR}
     ${MXML_DIR}
@@ -92,6 +93,7 @@ add_executable(cncvis_test cncvis_test.c)
 target_include_directories(cncvis_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${TGL_DIR}/include
+    ${TGL_DIR}/include-demo
     ${STLIO_DIR}/include
     ${STB_DIR}
     ${MXML_DIR}

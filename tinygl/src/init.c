@@ -101,20 +101,20 @@ static int TinyGLRuntimeCompatibilityTest() {
 		return 1;
 #if TGL_FEATURE_FISR == 1
 	t = fastInvSqrt(37);
-	tf2 = 1.0 / sqrt(37);
+	tf2 = 1.0f / sqrtf(37.0f);
 	if (TGL_FLOAT_ERR(t, tf2) > 0.05)
 		return 1;
 	t = fastInvSqrt(59);
-	tf2 = 1.0 / sqrt(59);
+	tf2 = 1.0f / sqrtf(59.0f);
 	if (TGL_FLOAT_ERR(t, tf2) > 0.05)
 		return 1;
 	t = fastInvSqrt(1023);
-	tf2 = 1.0 / sqrt(1023);
+	tf2 = 1.0f / sqrtf(1023.0f);
 	if (TGL_FLOAT_ERR(t, tf2) > 0.05)
 		return 1;
 
 	t = fastInvSqrt(10000);
-	tf2 = 1.0 / sqrt(10000);
+	tf2 = 1.0f / sqrtf(10000.0f);
 	if (TGL_FLOAT_ERR(t, tf2) > 0.05)
 		return 1;
 #endif
