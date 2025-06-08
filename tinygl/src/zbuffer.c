@@ -112,21 +112,29 @@ PIXEL pxReverse32(PIXEL x) {
 }
 #endif
 
-static void ZB_copyBuffer(ZBuffer* zb, void* buf, GLint linesize) {
+static void ZB_copyBuffer(ZBuffer* restrict zb, void* restrict buf, GLint linesize) {
 	GLint y;
 #if TGL_FEATURE_NO_COPY_COLOR == 1
 	GLint i;
 #endif
 #if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
 	for (y = 0; y < zb->ysize; y++) {
-		PIXEL* q;
-		GLubyte* p1;
-		q = zb->pbuf + y * zb->xsize;
-		p1 = (GLubyte*)buf + y * linesize;
+		PIXEL* restrict q = zb->pbuf + y * zb->xsize;
+		PIXEL* restrict p1 = (PIXEL*)((GLbyte*)buf + y * linesize);
 #if TGL_FEATURE_NO_COPY_COLOR == 1
-		for (i = 0; i < zb->xsize; i++) {
-			if ((*(q + i) & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				*(((PIXEL*)p1) + i) = *(q + i);
+		for (i = 0; i < zb->xsize; i += 4) {
+			PIXEL v0 = q[i];
+			PIXEL v1 = q[i + 1];
+			PIXEL v2 = q[i + 2];
+			PIXEL v3 = q[i + 3];
+			if ((v0 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				p1[i] = v0;
+			if ((v1 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				p1[i + 1] = v1;
+			if ((v2 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				p1[i + 2] = v2;
+			if ((v3 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				p1[i + 3] = v3;
 		}
 #else
 		memcpy(p1, q, linesize);
@@ -134,14 +142,22 @@ static void ZB_copyBuffer(ZBuffer* zb, void* buf, GLint linesize) {
 	}
 #else
 	for (y = 0; y < zb->ysize; y++) {
-		PIXEL* q;
-		GLubyte* p1;
-		q = zb->pbuf + y * zb->xsize;
-		p1 = (GLubyte*)buf + y * linesize;
+		PIXEL* restrict q = zb->pbuf + y * zb->xsize;
+		PIXEL* restrict p1 = (PIXEL*)((GLbyte*)buf + y * linesize);
 #if TGL_FEATURE_NO_COPY_COLOR == 1
-		for (i = 0; i < zb->xsize; i++) {
-			if ((*(q + i) & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
-				*(((PIXEL*)p1) + i) = *(q + i);
+		for (i = 0; i < zb->xsize; i += 4) {
+			PIXEL v0 = q[i];
+			PIXEL v1 = q[i + 1];
+			PIXEL v2 = q[i + 2];
+			PIXEL v3 = q[i + 3];
+			if ((v0 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				p1[i] = v0;
+			if ((v1 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				p1[i + 1] = v1;
+			if ((v2 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				p1[i + 2] = v2;
+			if ((v3 & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+				p1[i + 3] = v3;
 		}
 #else
 		memcpy(p1, q, linesize);

@@ -119,6 +119,31 @@ void glopDrawPixels(GLParam* p) {
 	GLfloat pzoomy = c->pzoomy;
 
 	GLint zz = c->rasterpos_zz;
+
+	/* fast path when pixel zoom is 1:1 */
+	if (pzoomx == 1.0f && pzoomy == 1.0f) {
+		for (sy = 0; sy < h; ++sy) {
+			int ty = (int)(rastpos.v[1] - ((GLfloat)(h - sy)));
+			if (ty < 0 || ty >= th)
+				continue;
+			GLushort* pzrow = zbuf + ty * tw;
+			PIXEL* dst = pbuf + ty * tw;
+			PIXEL* src = d + sy * w;
+			int tx_base = (int)rastpos.v[0];
+			for (sx = 0; sx < w; ++sx) {
+				int tx = tx_base + sx;
+				if (tx >= 0 && tx < tw) {
+					GLushort* pz = pzrow + tx;
+					if (ZCMP(zz, *pz)) {
+						dst[tx] = src[sx];
+						if (zbdw)
+							*pz = zz;
+					}
+				}
+			}
+		}
+		return;
+	}
 #if TGL_FEATURE_BLEND_DRAW_PIXELS == 1
 	TGL_BLEND_VARS
 #endif

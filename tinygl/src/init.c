@@ -342,6 +342,15 @@ void glInit(void* zbuffer1) {
 	for (i = 0; i < 4; i++)
 		c->fog_color[i] = 0.0f;
 
+	c->alpha_test_enabled = 0;
+	c->alpha_func = GL_ALWAYS;
+	c->alpha_ref = 0.0f;
+
+	c->stencil_test_enabled = 0;
+	c->stencil_func = GL_ALWAYS;
+	c->stencil_ref = 0;
+	c->stencil_mask = 0xFFFFFFFFu;
+
 	/* clear the resize callback function pointer */
 	c->gl_resize_viewport = NULL;
 
