@@ -1,9 +1,13 @@
 #include "../include/GL/gl.h"
 #include "../include/zbuffer.h"
+#include "../src/zgl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+static const int WIN_X = 256;
+static const int WIN_Y = 256;
 
 static double now_sec(void) {
   struct timespec ts;
@@ -14,14 +18,33 @@ static double now_sec(void) {
 typedef void (*bench_fn)(int loops);
 static FILE *log_file;
 
-static void run_bench(const char *name, bench_fn fn, int loops) {
+typedef struct {
+  const char *name;
+  bench_fn fn;
+  double pixels_per_call; /* estimated pixels rendered per call */
+} BenchTest;
+
+static void print_table_header(FILE *out) {
+  fprintf(out, "\n%-30s %10s %10s %12s %12s\n", "Test Name", "Iterations",
+          "Time (ms)", "Rate (calls/s)", "Fill Rate (MP/s)");
+  fprintf(out, "%s\n",
+          "--------------------------------------------------------------------"
+          "------------");
+}
+
+static void run_bench(const char *name, bench_fn fn, int loops,
+                      double pixels_per_call) {
   double start = now_sec();
   fn(loops);
   double end = now_sec();
-  fprintf(log_file, "%-20s %6d calls in %8.3f ms (%.0f/s)\n", name, loops,
-          (end - start) * 1000.0, loops / (end - start));
-  printf("%-20s %6d calls in %8.3f ms (%.0f/s)\n", name, loops,
-         (end - start) * 1000.0, loops / (end - start));
+  double ms = (end - start) * 1000.0;
+  double rate = loops / (end - start);
+  double fill = pixels_per_call > 0
+                    ? (pixels_per_call * loops) / (end - start) / 1e6
+                    : 0.0;
+  fprintf(log_file, "%-30s %10d %10.2f %12.0f %12.2f\n", name, loops, ms, rate,
+          fill);
+  printf("%-30s %10d %10.2f %12.0f %12.2f\n", name, loops, ms, rate, fill);
 }
 
 static void bench_clear(int loops) {
@@ -372,6 +395,32 @@ static void bench_fillrate_overdraw(int loops) {
   }
 }
 
+static void bench_textured_overdraw(int loops) {
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, tex);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  int layers = 16;
+  for (int i = 0; i < loops; ++i) {
+    for (int l = 0; l < layers; ++l) {
+      float z = -1.0f + 2.0f * (float)l / (float)(layers - 1);
+      glBegin(GL_QUADS);
+      glColor4f(1.f, 1.f, 1.f, 0.5f);
+      glTexCoord2f(0.f, 0.f);
+      glVertex3f(-1.f, -1.f, z);
+      glTexCoord2f(1.f, 0.f);
+      glVertex3f(1.f, -1.f, z);
+      glTexCoord2f(1.f, 1.f);
+      glVertex3f(1.f, 1.f, z);
+      glTexCoord2f(0.f, 1.f);
+      glVertex3f(-1.f, 1.f, z);
+      glEnd();
+    }
+  }
+  glDisable(GL_BLEND);
+  glDisable(GL_TEXTURE_2D);
+}
+
 static void bench_lighting(int loops) {
 #if defined(GL_LIGHTING) && defined(GL_LIGHT0)
   glEnable(GL_LIGHTING);
@@ -494,13 +543,7 @@ static void bench_driver_overhead(int loops) {
 static void bench_drawpixels(int loops) {
   for (int i = 0; i < loops; ++i) {
     glRasterPos2f(-1.f, 1.f);
-    glDrawPixels(256, 256, GL_RGB,
-#if TGL_FEATURE_RENDER_BITS == 32
-                 GL_UNSIGNED_INT,
-#else
-                 GL_UNSIGNED_SHORT,
-#endif
-                 pixel_buf);
+    glDrawPixels(WIN_X, WIN_Y, GL_RGBA, GL_UNSIGNED_INT, pixel_buf);
   }
 }
 
@@ -562,30 +605,69 @@ static void bench_icosahedron(int loops) {
   }
 }
 
+static void run_all(int loops) {
+  static const BenchTest tests[] = {
+      {"glClear", bench_clear, WIN_X * WIN_Y},
+      {"Triangles", bench_triangles, WIN_X * WIN_Y * 0.33},
+      {"TriangleStrip", bench_triangle_strip, WIN_X * WIN_Y * 0.5},
+      {"TexturedTriangles", bench_tex_triangles, WIN_X * WIN_Y * 0.33},
+      {"BlendedTriangles", bench_blended_triangles, WIN_X * WIN_Y * 0.33},
+      {"DepthTestedTriangles", bench_depth_triangles, WIN_X * WIN_Y * 0.33},
+      {"GouraudFill", bench_gouraud_fill, WIN_X * WIN_Y},
+      {"TexturedFill", bench_tex_fill, WIN_X * WIN_Y},
+      {"TexFill_Blend", bench_tex_fill_blend, WIN_X * WIN_Y},
+      {"SmallTexFill", bench_smalltex_fill, WIN_X * WIN_Y},
+      {"AlphaTest", bench_alpha_test, WIN_X * WIN_Y * 0.33},
+      {"Scissor", bench_scissor, 128 * 128},
+      {"PolygonOffset", bench_polygon_offset, WIN_X * WIN_Y},
+      {"VertexArrays", bench_vertex_arrays, WIN_X * WIN_Y * 0.33},
+      {"Stencil", bench_stencil, WIN_X * WIN_Y},
+      {"PointSprites", bench_point_sprites, 21 * 21},
+      {"MultiTexSim", bench_multitex_sim, WIN_X * WIN_Y * 2},
+      {"OverdrawFillrate", bench_fillrate_overdraw, WIN_X * WIN_Y * 32},
+      {"TexturedOverdraw", bench_textured_overdraw, WIN_X * WIN_Y * 16},
+      {"Lighting", bench_lighting, WIN_X * WIN_Y * 0.33},
+      {"Fog", bench_fog, WIN_X * WIN_Y * 0.33},
+      {"LogicOp", bench_logic_op, WIN_X * WIN_Y},
+      {"GridMesh", bench_grid_mesh, WIN_X * WIN_Y * 32 * 32},
+      {"PointCloud", bench_point_cloud, 4096},
+      {"glDrawPixels", bench_drawpixels, WIN_X * WIN_Y},
+      {"glCopyTexImage2D", bench_copytex, WIN_X * WIN_Y},
+      {"glTexImage2D", bench_teximage, 0},
+      {"glBindTexture", bench_bindtex, 0},
+      {"glBlendFunc", bench_blendfunc, 0},
+      {"glEnable/Disable", bench_enable, 0},
+      {"glViewport", bench_viewport, 0},
+      {"Icosahedron", bench_icosahedron, WIN_X * WIN_Y * 20},
+      {"DriverOverhead", bench_driver_overhead, 0},
+  };
+
+  print_table_header(stdout);
+  print_table_header(log_file);
+  for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    run_bench(tests[i].name, tests[i].fn, loops, tests[i].pixels_per_call);
+}
+
 int main(int argc, char **argv) {
   int loops = 10000;
-  int winX = 256;
-  int winY = 256;
   if (argc > 1)
     loops = atoi(argv[1]);
   log_file = fopen("benchmark.log", "w");
-  ZBuffer *zb = ZB_open(winX, winY,
-#if TGL_FEATURE_RENDER_BITS == 32
-                        ZB_MODE_RGBA,
-#else
-                        ZB_MODE_5R6G5B,
-#endif
-                        0);
+  if (!log_file) {
+    fprintf(stderr, "Failed to open benchmark.log\n");
+    return 1;
+  }
+  ZBuffer *zb = ZB_open(WIN_X, WIN_Y, ZB_MODE_RGBA, 0);
   if (!zb) {
     fprintf(stderr, "ZB_open failed\n");
     return 1;
   }
   glInit(zb);
-  glViewport(0, 0, winX, winY);
+  glViewport(0, 0, WIN_X, WIN_Y);
   glClearColor(0, 0, 0, 1);
 
-  pixel_buf = malloc(winX * winY * sizeof(PIXEL));
-  for (int i = 0; i < winX * winY; ++i)
+  pixel_buf = malloc(WIN_X * WIN_Y * sizeof(PIXEL));
+  for (int i = 0; i < WIN_X * WIN_Y; ++i)
     pixel_buf[i] = 0xffffffffu;
   texbuf = malloc(TGL_FEATURE_TEXTURE_DIM * TGL_FEATURE_TEXTURE_DIM * 3);
   texbuf_small = malloc(32 * 32 * 3);
@@ -601,38 +683,12 @@ int main(int argc, char **argv) {
   glTexImage2D(GL_TEXTURE_2D, 0, 3, 32, 32, 0, GL_RGB, GL_UNSIGNED_BYTE,
                texbuf_small);
 
-  run_bench("glClear", bench_clear, loops);
-  run_bench("Triangles", bench_triangles, loops);
-  run_bench("TriangleStrip", bench_triangle_strip, loops);
-  run_bench("TexturedTriangles", bench_tex_triangles, loops);
-  run_bench("BlendedTriangles", bench_blended_triangles, loops);
-  run_bench("DepthTestedTriangles", bench_depth_triangles, loops);
-  run_bench("GouraudFill", bench_gouraud_fill, loops);
-  run_bench("TexturedFill", bench_tex_fill, loops);
-  run_bench("TexFill_Blend", bench_tex_fill_blend, loops);
-  run_bench("SmallTexFill", bench_smalltex_fill, loops);
-  run_bench("AlphaTest", bench_alpha_test, loops);
-  run_bench("Scissor", bench_scissor, loops);
-  run_bench("PolygonOffset", bench_polygon_offset, loops);
-  run_bench("VertexArrays", bench_vertex_arrays, loops);
-  run_bench("Stencil", bench_stencil, loops);
-  run_bench("PointSprites", bench_point_sprites, loops);
-  run_bench("MultiTexSim", bench_multitex_sim, loops);
-  run_bench("OverdrawFillrate", bench_fillrate_overdraw, loops);
-  run_bench("Lighting", bench_lighting, loops);
-  run_bench("Fog", bench_fog, loops);
-  run_bench("LogicOp", bench_logic_op, loops);
-  run_bench("GridMesh", bench_grid_mesh, loops);
-  run_bench("PointCloud", bench_point_cloud, loops);
-  run_bench("glDrawPixels", bench_drawpixels, loops);
-  run_bench("glCopyTexImage2D", bench_copytex, loops);
-  run_bench("glTexImage2D", bench_teximage, loops);
-  run_bench("glBindTexture", bench_bindtex, loops);
-  run_bench("glBlendFunc", bench_blendfunc, loops);
-  run_bench("glEnable/Disable", bench_enable, loops);
-  run_bench("glViewport", bench_viewport, loops);
-  run_bench("Icosahedron", bench_icosahedron, loops);
-  run_bench("DriverOverhead", bench_driver_overhead, loops);
+  printf("\n== Non-threaded ==\n");
+  tgl_threads_enabled = 0;
+  run_all(loops);
+  printf("\n== Threaded ==\n");
+  tgl_threads_enabled = 1;
+  run_all(loops);
 
   free(pixel_buf);
   glDeleteTextures(1, &tex);

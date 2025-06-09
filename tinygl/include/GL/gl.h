@@ -7,6 +7,8 @@
 #define COMPILETIME_TINYGL_COMPAT_TEST 0
 
 #define GL_VERSION_1_1 1
+#define GL_VERSION_1_2 1
+#define GL_VERSION_1_2_1 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -663,7 +665,52 @@ enum {
   GL_COLOR_ARRAY_POINTER_EXT = 0x8090,
   GL_INDEX_ARRAY_POINTER_EXT = 0x8091,
   GL_TEXTURE_COORD_ARRAY_POINTER_EXT = 0x8092,
-  GL_EDGE_FLAG_ARRAY_POINTER_EXT = 0x8093
+  GL_EDGE_FLAG_ARRAY_POINTER_EXT = 0x8093,
+  /* OpenGL 1.2 */
+  GL_UNSIGNED_BYTE_3_3_2 = 0x8032,
+  GL_UNSIGNED_SHORT_4_4_4_4 = 0x8033,
+  GL_UNSIGNED_SHORT_5_5_5_1 = 0x8034,
+  GL_UNSIGNED_INT_10_10_10_2 = 0x8036,
+  GL_TEXTURE_BINDING_3D = 0x806A,
+  GL_PACK_SKIP_IMAGES = 0x806B,
+  GL_PACK_IMAGE_HEIGHT = 0x806C,
+  GL_UNPACK_SKIP_IMAGES = 0x806D,
+  GL_UNPACK_IMAGE_HEIGHT = 0x806E,
+  GL_TEXTURE_3D = 0x806F,
+  GL_PROXY_TEXTURE_3D = 0x8070,
+  GL_TEXTURE_DEPTH = 0x8071,
+  GL_TEXTURE_WRAP_R = 0x8072,
+  GL_MAX_3D_TEXTURE_SIZE = 0x8073,
+  GL_UNSIGNED_BYTE_2_3_3_REV = 0x8362,
+  GL_UNSIGNED_SHORT_5_6_5_REV = 0x8364,
+  GL_UNSIGNED_SHORT_4_4_4_4_REV = 0x8365,
+  GL_UNSIGNED_SHORT_1_5_5_5_REV = 0x8366,
+  GL_UNSIGNED_INT_8_8_8_8_REV = 0x8367,
+  GL_UNSIGNED_INT_2_10_10_10_REV = 0x8368,
+  GL_BGR = 0x80E0,
+  GL_BGRA = 0x80E1,
+  GL_MAX_ELEMENTS_VERTICES = 0x80E8,
+  GL_MAX_ELEMENTS_INDICES = 0x80E9,
+  GL_CLAMP_TO_EDGE = 0x812F,
+  GL_TEXTURE_MIN_LOD = 0x813A,
+  GL_TEXTURE_MAX_LOD = 0x813B,
+  GL_TEXTURE_BASE_LEVEL = 0x813C,
+  GL_TEXTURE_MAX_LEVEL = 0x813D,
+  /* GL_ARB_multitexture */
+  GL_TEXTURE0_ARB = 0x84C0,
+  GL_TEXTURE1_ARB = 0x84C1,
+  GL_TEXTURE2_ARB = 0x84C2,
+  GL_TEXTURE3_ARB = 0x84C3,
+  GL_MAX_TEXTURE_UNITS_ARB = 0x84E2,
+  /* GL_ARB_imaging */
+  GL_COLOR_TABLE = 0x80D0,
+  GL_POST_CONVOLUTION_COLOR_TABLE = 0x80D1,
+  GL_POST_COLOR_MATRIX_COLOR_TABLE = 0x80D2,
+  GL_PROXY_COLOR_TABLE = 0x80D3,
+  GL_PROXY_POST_CONVOLUTION_COLOR_TABLE = 0x80D4,
+  GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE = 0x80D5,
+  GL_COLOR_TABLE_SCALE = 0x80D6,
+  GL_COLOR_TABLE_BIAS = 0x80D7
 
 };
 
@@ -898,6 +945,79 @@ void glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat,
 void glTexEnvi(GLint target, GLint pname, GLint param);
 
 void glTexParameteri(GLint target, GLint pname, GLint param);
+
+/* OpenGL 1.2 functions */
+void glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
+                         GLenum type, const void *indices);
+void glTexImage3D(GLenum target, GLint level, GLint internalformat,
+                  GLsizei width, GLsizei height, GLsizei depth, GLint border,
+                  GLenum format, GLenum type, const void *pixels);
+void glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
+                     GLint zoffset, GLsizei width, GLsizei height,
+                     GLsizei depth, GLenum format, GLenum type,
+                     const void *pixels);
+void glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset,
+                         GLint yoffset, GLint zoffset, GLint x, GLint y,
+                         GLsizei width, GLsizei height);
+/* GL_ARB_imaging */
+void glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+void glBlendEquation(GLenum mode);
+void glColorTable(GLenum target, GLenum internalformat, GLsizei width,
+                  GLenum format, GLenum type, const void *table);
+void glColorSubTable(GLenum target, GLsizei start, GLsizei count, GLenum format,
+                     GLenum type, const void *data);
+void glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y,
+                      GLsizei width);
+void glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y,
+                         GLsizei width);
+void glColorTableParameteriv(GLenum target, GLenum pname, const GLint *params);
+void glColorTableParameterfv(GLenum target, GLenum pname,
+                             const GLfloat *params);
+void glGetColorTable(GLenum target, GLenum format, GLenum type, void *table);
+void glGetColorTableParameteriv(GLenum target, GLenum pname, GLint *params);
+void glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat *params);
+void glHistogram(GLenum target, GLsizei width, GLenum internalformat,
+                 GLboolean sink);
+void glResetHistogram(GLenum target);
+void glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type,
+                    void *values);
+void glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params);
+void glGetHistogramParameteriv(GLenum target, GLenum pname, GLint *params);
+void glMinmax(GLenum target, GLenum internalformat, GLboolean sink);
+void glResetMinmax(GLenum target);
+void glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type,
+                 void *values);
+void glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params);
+void glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params);
+void glConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width,
+                           GLenum format, GLenum type, const void *image);
+void glConvolutionFilter2D(GLenum target, GLenum internalformat, GLsizei width,
+                           GLsizei height, GLenum format, GLenum type,
+                           const void *image);
+void glConvolutionParameterf(GLenum target, GLenum pname, GLfloat params);
+void glConvolutionParameterfv(GLenum target, GLenum pname,
+                              const GLfloat *params);
+void glConvolutionParameteri(GLenum target, GLenum pname, GLint params);
+void glConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params);
+void glCopyConvolutionFilter1D(GLenum target, GLenum internalformat, GLint x,
+                               GLint y, GLsizei width);
+void glCopyConvolutionFilter2D(GLenum target, GLenum internalformat, GLint x,
+                               GLint y, GLsizei width, GLsizei height);
+void glGetConvolutionFilter(GLenum target, GLenum format, GLenum type,
+                            void *image);
+void glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params);
+void glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params);
+void glSeparableFilter2D(GLenum target, GLenum internalformat, GLsizei width,
+                         GLsizei height, GLenum format, GLenum type,
+                         const void *row, const void *column);
+void glGetSeparableFilter(GLenum target, GLenum format, GLenum type, void *row,
+                          void *column, void *span);
+/* GL_ARB_multitexture */
+void glActiveTextureARB(GLenum texture);
+void glClientActiveTextureARB(GLenum texture);
+void glMultiTexCoord2fARB(GLenum texture, GLfloat s, GLfloat t);
+void glMultiTexCoord4fARB(GLenum texture, GLfloat s, GLfloat t, GLfloat r,
+                          GLfloat q);
 
 GLboolean glAreTexturesResident(GLsizei n, const GLuint *textures,
                                 GLboolean *residences);

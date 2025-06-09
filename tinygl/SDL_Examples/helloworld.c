@@ -1,17 +1,16 @@
-//#define PLAY_MUSIC
+// #define PLAY_MUSIC
 
 #include "../include/GL/gl.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <GL/glu.h>
+// #include <GL/glu.h>
 #include "../include/GL/gl.h"
 
 #include "../include/zbuffer.h"
 #define CHAD_API_IMPL
-#define CHAD_MATH_IMPL
-#include "../include-demo/3dMath.h"
+#include "../include-demo/chad_math.h"
 #ifdef PLAY_MUSIC
 #include "../include-demo/api_audio.h"
 #else
@@ -276,13 +275,13 @@ int main(int argc, char** argv) {
 				fprintf(stderr, "SDL ERROR: Can't lock screen: %s\n", SDL_GetError());
 				return 1;
 			}
-			/*
-			printf("\nRMASK IS %u",screen->format->Rmask);
-			printf("\nGMASK IS %u",screen->format->Gmask);
-			printf("\nBMASK IS %u",screen->format->Bmask);
-			printf("\nAMASK IS %u",screen->format->Amask);
-			*/
-			// Quickly convert all pixels to the correct format
+		/*
+		printf("\nRMASK IS %u",screen->format->Rmask);
+		printf("\nGMASK IS %u",screen->format->Gmask);
+		printf("\nBMASK IS %u",screen->format->Bmask);
+		printf("\nAMASK IS %u",screen->format->Amask);
+		*/
+		// Quickly convert all pixels to the correct format
 #if TGL_FEATURE_RENDER_BITS == 32
 		if (needsRGBAFix)
 			for (int i = 0; i < frameBuffer->xsize * frameBuffer->ysize; i++) {

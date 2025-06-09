@@ -28,7 +28,6 @@ void glopMatrixMode(GLParam* p) {
 		break;
 	default:
 		break;
-		
 	}
 }
 
@@ -104,8 +103,6 @@ void glopPopMatrix(GLParam* p) {
 	GLContext* c = gl_get_context();
 	GLint n = c->matrix_mode;
 
-	
-
 #if TGL_FEATURE_ERROR_CHECK == 1
 	if (!(c->matrix_stack_ptr[n] > c->matrix_stack[n]))
 #define ERROR_FLAG GL_INVALID_OPERATION
@@ -163,14 +160,14 @@ void glopRotate(GLParam* p) {
 		GLfloat len = u[0] * u[0] + u[1] * u[1] + u[2] * u[2];
 		if (len == 0.0f)
 			return;
-		len = 1.0f / sqrt(len);
+		len = 1.0f / sqrtf(len);
 #endif
 		u[0] *= len;
 		u[1] *= len;
 		u[2] *= len;
 		/* store cos and sin values */
-		cost = cos(angle);
-		sint = sin(angle);
+		cost = cosf(angle);
+		sint = sinf(angle);
 
 		/* fill in the values */
 		m.m[3][0] = m.m[3][1] = m.m[3][2] = m.m[0][3] = m.m[1][3] = m.m[2][3] = 0.0f;
@@ -231,40 +228,50 @@ void glopTranslate(GLParam* p) {
 	gl_matrix_update();
 }
 
-void glopFrustum(GLParam *p)
-{
-  GLContext* c = gl_get_context();
-  GLfloat *r;
-  M4 m;
-  GLfloat left=p[1].f;
-  GLfloat right=p[2].f;
-  GLfloat bottom=p[3].f;
-  GLfloat top=p[4].f;
-  GLfloat nearv=p[5].f;
-  GLfloat farp=p[6].f;
-  GLfloat x,y,A,B,C,D;
+void glopFrustum(GLParam* p) {
+	GLContext* c = gl_get_context();
+	GLfloat* r;
+	M4 m;
+	GLfloat left = p[1].f;
+	GLfloat right = p[2].f;
+	GLfloat bottom = p[3].f;
+	GLfloat top = p[4].f;
+	GLfloat nearv = p[5].f;
+	GLfloat farp = p[6].f;
+	GLfloat x, y, A, B, C, D;
 
-  x = (2.0*nearv) / (right-left);
-  y = (2.0*nearv) / (top-bottom);
-  A = (right+left) / (right-left);
-  B = (top+bottom) / (top-bottom);
-  C = -(farp+nearv) / ( farp-nearv);
-  D = -(2.0*farp*nearv) / (farp-nearv);
+	x = (2.0 * nearv) / (right - left);
+	y = (2.0 * nearv) / (top - bottom);
+	A = (right + left) / (right - left);
+	B = (top + bottom) / (top - bottom);
+	C = -(farp + nearv) / (farp - nearv);
+	D = -(2.0 * farp * nearv) / (farp - nearv);
 
-  r=&m.m[0][0];
-  r[0]= x; r[1]=0; r[2]=A; r[3]=0;
-  r[4]= 0; r[5]=y; r[6]=B; r[7]=0;
-  r[8]= 0; r[9]=0; r[10]=C; r[11]=D;
-  r[12]= 0; r[13]=0; r[14]=-1; r[15]=0;
+	r = &m.m[0][0];
+	r[0] = x;
+	r[1] = 0;
+	r[2] = A;
+	r[3] = 0;
+	r[4] = 0;
+	r[5] = y;
+	r[6] = B;
+	r[7] = 0;
+	r[8] = 0;
+	r[9] = 0;
+	r[10] = C;
+	r[11] = D;
+	r[12] = 0;
+	r[13] = 0;
+	r[14] = -1;
+	r[15] = 0;
 
-  gl_M4_MulLeft(c->matrix_stack_ptr[c->matrix_mode],&m);
+	gl_M4_MulLeft(c->matrix_stack_ptr[c->matrix_mode], &m);
 
-  gl_matrix_update(c);
+	gl_matrix_update(c);
 }
 
 /* thanks mesa */
-void glopOrtho(GLParam *p)
-{
+void glopOrtho(GLParam* p) {
 	GLContext* c = gl_get_context();
 	GLfloat left = p[1].f;
 	GLfloat right = p[2].f;
@@ -276,20 +283,32 @@ void glopOrtho(GLParam *p)
 	GLfloat tx, ty, tz;
 	GLfloat m[16];
 
-	x = 2.0 / (right-left);
-	y = 2.0 / (top-bottom);
-	z = -2.0 / (farv-nearv);
-	tx = -(right+left) / (right-left);
-	ty = -(top+bottom) / (top-bottom);
-	tz = -(farv+nearv) / (farv-nearv);
+	x = 2.0 / (right - left);
+	y = 2.0 / (top - bottom);
+	z = -2.0 / (farv - nearv);
+	tx = -(right + left) / (right - left);
+	ty = -(top + bottom) / (top - bottom);
+	tz = -(farv + nearv) / (farv - nearv);
 
-	#define M(row,col)  m[col*4+row]
-		M(0,0) = x;     M(0,1) = 0.0F;  M(0,2) = 0.0F;  M(0,3) = tx;
-		M(1,0) = 0.0F;  M(1,1) = y;     M(1,2) = 0.0F;  M(1,3) = ty;
-		M(2,0) = 0.0F;  M(2,1) = 0.0F;  M(2,2) = z;     M(2,3) = tz;
-		M(3,0) = 0.0F;  M(3,1) = 0.0F;  M(3,2) = 0.0F;  M(3,3) = 1.0F;
-	#undef M
+#define M(row, col) m[col * 4 + row]
+	M(0, 0) = x;
+	M(0, 1) = 0.0F;
+	M(0, 2) = 0.0F;
+	M(0, 3) = tx;
+	M(1, 0) = 0.0F;
+	M(1, 1) = y;
+	M(1, 2) = 0.0F;
+	M(1, 3) = ty;
+	M(2, 0) = 0.0F;
+	M(2, 1) = 0.0F;
+	M(2, 2) = z;
+	M(2, 3) = tz;
+	M(3, 0) = 0.0F;
+	M(3, 1) = 0.0F;
+	M(3, 2) = 0.0F;
+	M(3, 3) = 1.0F;
+#undef M
 
-	gl_M4_MulLeft(c->matrix_stack_ptr[c->matrix_mode], (M4 *)m);
+	gl_M4_MulLeft(c->matrix_stack_ptr[c->matrix_mode], (M4*)m);
 	gl_matrix_update(c);
 }

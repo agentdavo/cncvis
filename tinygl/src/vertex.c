@@ -159,9 +159,9 @@ static void gl_transform_to_viewport_vertex_c(GLVertex* v) {
 		v->zp.z = (GLint)(v->pc.Z * winv * c->viewport.scale.Z + c->viewport.trans.Z);
 	}
 
-	v->zp.r = (GLint)(v->color.v[0] * COLOR_CORRECTED_MULT_MASK + COLOR_MIN_MULT) & COLOR_MASK;
-	v->zp.g = (GLint)(v->color.v[1] * COLOR_CORRECTED_MULT_MASK + COLOR_MIN_MULT) & COLOR_MASK;
-	v->zp.b = (GLint)(v->color.v[2] * COLOR_CORRECTED_MULT_MASK + COLOR_MIN_MULT) & COLOR_MASK;
+	v->zp.r = ((GLint)(v->color.v[0] * 255.0f + 0.5f) << 16) & COLOR_MASK;
+	v->zp.g = ((GLint)(v->color.v[1] * 255.0f + 0.5f) << 8) & COLOR_MASK;
+	v->zp.b = ((GLint)(v->color.v[2] * 255.0f + 0.5f)) & COLOR_MASK;
 
 	if (c->texture_2d_enabled) {
 		v->zp.s = (GLint)(v->tex_coord.X * (ZB_POINT_S_MAX - ZB_POINT_S_MIN) + ZB_POINT_S_MIN);
