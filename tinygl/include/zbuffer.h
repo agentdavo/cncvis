@@ -34,40 +34,21 @@
    ((t & ZB_T_MASK) >> (ZB_POINT_T_VALUE - PSZSH)))
 #endif
 
-/*The corrected mult mask prevents a bug relating to color interp. it's also why
- * the color bit depth is so damn high.*/
-#define COLOR_MULT_MASK (0xff0000)
-#define COLOR_CORRECTED_MULT_MASK (0xfe0000)
-#define COLOR_MASK (0xffffff)
-#define COLOR_MIN_MULT (0x00ffff)
+#define COLOR_MASK 0x00ffffff
 #define COLOR_SHIFT 16
-
 #define COLOR_R_GET32(r) ((r) & 0xff0000)
-#define COLOR_G_GET32(g) ((g >> 8) & 0xff00)
-#define COLOR_B_GET32(b) ((b >> 16) & 0xff)
+#define COLOR_G_GET32(g) (((g) >> 8) & 0xff00)
+#define COLOR_B_GET32(b) (((b) >> 16) & 0xff)
 
-#define COLOR_R_GET16(r) ((r >> 8) & 0xF800)
-#define COLOR_G_GET16(g) ((((g)) >> 13) & 0x07E0)
-#define COLOR_B_GET16(b) (((b) >> 19) & 31)
-
-#if TGL_FEATURE_RENDER_BITS == 32
 #define RGB_TO_PIXEL(r, g, b)                                                  \
   (COLOR_R_GET32(r) | COLOR_G_GET32(g) | COLOR_B_GET32(b))
-#elif TGL_FEATURE_RENDER_BITS == 16
-#define RGB_TO_PIXEL(r, g, b)                                                  \
-  (COLOR_R_GET16(r) | COLOR_G_GET16(g) | COLOR_B_GET16(b))
-#endif
 /*This is how textures are sampled. if you want to do some sort of fancy texture
  * filtering,*/
 /*you do it here.*/
 #define TEXTURE_SAMPLE(texture, s, t)                                          \
   (*(PIXEL *)((GLbyte *)texture + ST_TO_TEXTURE_BYTE_OFFSET(s, t)))
-/* display modes */
-#define ZB_MODE_5R6G5B 1 /* true color 16 bits */
-#define ZB_MODE_INDEX 2  /* color index 8 bits */
-#define ZB_MODE_RGBA 3   /* 32 bit ABGR mode */
-#define ZB_MODE_RGB24 4  /* 24 bit rgb mode */
-#define ZB_NB_COLORS 225 /* number of colors for 8 bit display */
+/* display mode */
+#define ZB_MODE_RGBA 3 /* 32 bit ARGB mode */
 
 #define TGL_CLAMPI(imp)                                                        \
   ((imp > 0) ? ((imp > COLOR_MASK) ? COLOR_MASK : imp) : 0)
@@ -328,14 +309,6 @@ void ZB_copyFrameBuffer(ZBuffer *restrict zb, void *restrict buf,
                         GLint linesize);
 
 /* zdither.c */
-
-/*
-void ZB_initDither(ZBuffer *zb,GLint nb_colors,
-                   unsigned char *color_indexes,GLint *color_table);
-void ZB_closeDither(ZBuffer *zb);
-void ZB_ditherFrameBuffer(ZBuffer *zb,unsigned char *dest,
-                          GLint linesize);
-*/
 /* zline.c */
 
 void ZB_plot(ZBuffer *zb, ZBufferPoint *p);
@@ -368,6 +341,11 @@ void ZB_fillTriangleMappingPerspective(ZBuffer *zb, ZBufferPoint *p0,
 void ZB_fillTriangleMappingPerspectiveNOBLEND(ZBuffer *zb, ZBufferPoint *p0,
                                               ZBufferPoint *p1,
                                               ZBufferPoint *p2);
+
+#if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
+void init_raster_threads(void);
+void end_raster_threads(void);
+#endif
 
 typedef void (*ZB_fillTriangleFunc)(ZBuffer *, ZBufferPoint *, ZBufferPoint *,
                                     ZBufferPoint *);

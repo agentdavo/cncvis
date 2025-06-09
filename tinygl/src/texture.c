@@ -2,19 +2,11 @@
  * Texture Manager
  */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#endif
-
 #include "zgl.h"
 #if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
 #include "../include-demo/lockstepthread.h"
-#endif
 
-#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
+#define NUM_TEX_THREADS 4
 typedef void (*RowFunc)(const void*, void*, GLint);
 typedef struct {
 	const void* src;
@@ -25,12 +17,30 @@ typedef struct {
 	GLint lines;
 	RowFunc fn;
 } TexJob;
-static lsthread tex_thread;
-static TexJob tex_job;
-#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
-static void row_copy_pixels(const void* src, void* dst, GLint w) { memcpy(dst, src, (size_t)w * sizeof(PIXEL)); }
+static c11_lsthread tex_threads[NUM_TEX_THREADS];
+static TexJob tex_jobs[NUM_TEX_THREADS];
+
+static inline void row_copy_pixels(const void* restrict src, void* restrict dst, GLint w) { memcpy(dst, src, (size_t)w * sizeof(PIXEL)); }
+#if TGL_FEATURE_NO_COPY_COLOR == 1
+static inline void row_copy_pixels_ncc(const void* restrict src, void* restrict dst, GLint w) {
+	const PixelQuad* s = (const PixelQuad*)src;
+	PixelQuad* d = (PixelQuad*)dst;
+	GLint n = w >> 2;
+	for (GLint i = 0; i < n; ++i) {
+		PixelQuad q = s[i];
+		if ((q.px[0] & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+			d[i].px[0] = q.px[0];
+		if ((q.px[1] & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+			d[i].px[1] = q.px[1];
+		if ((q.px[2] & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+			d[i].px[2] = q.px[2];
+		if ((q.px[3] & TGL_COLOR_MASK) != TGL_NO_COPY_COLOR)
+			d[i].px[3] = q.px[3];
+	}
+}
+#endif
 #if TGL_FEATURE_RENDER_BITS == 32
-static void row_convert_rgb(const void* src, void* dst, GLint w) {
+static inline void row_convert_rgb(const void* restrict src, void* restrict dst, GLint w) {
 	const GLubyte* s = (const GLubyte*)src;
 	PIXEL* d = (PIXEL*)dst;
 	for (GLint i = 0; i < w; ++i) {
@@ -39,7 +49,7 @@ static void row_convert_rgb(const void* src, void* dst, GLint w) {
 	}
 }
 #elif TGL_FEATURE_RENDER_BITS == 16
-static void row_convert_rgb(const void* src, void* dst, GLint w) {
+static inline void row_convert_rgb(const void* restrict src, void* restrict dst, GLint w) {
 	const GLubyte* s = (const GLubyte*)src;
 	GLushort* d = (GLushort*)dst;
 	for (GLint i = 0; i < w; ++i) {
@@ -57,7 +67,6 @@ static void tex_job_func(void* arg) {
 		job->fn(s, d, job->width);
 	}
 }
-#endif
 #endif
 
 static GLTexture* find_texture(GLint h) {
@@ -170,17 +179,21 @@ void glInitTextures() {
 	c->texture_2d_enabled = 0;
 	c->current_texture = find_texture(0);
 #if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
-	init_lsthread(&tex_thread);
-	tex_thread.execute = tex_job_func;
-	tex_thread.argument = &tex_job;
-	start_lsthread(&tex_thread);
+	for (int i = 0; i < NUM_TEX_THREADS; ++i) {
+		init_c11_lsthread(&tex_threads[i]);
+		tex_threads[i].execute = tex_job_func;
+		tex_threads[i].argument = &tex_jobs[i];
+		start_c11_lsthread(&tex_threads[i]);
+	}
 #endif
 }
 
 void glEndTextures() {
 #if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
-	kill_lsthread(&tex_thread);
-	destroy_lsthread(&tex_thread);
+	for (int i = 0; i < NUM_TEX_THREADS; ++i) {
+		kill_c11_lsthread(&tex_threads[i]);
+		destroy_c11_lsthread(&tex_threads[i]);
+	}
 #endif
 }
 
@@ -296,24 +309,44 @@ void glopCopyTexImage2D(GLParam* p) {
 	if (x >= 0 && y >= 0 && x + w <= c->zb->xsize && y + h <= c->zb->ysize) {
 		PIXEL* src = c->zb->pbuf + y * c->zb->xsize + x;
 #if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
-		if (tgl_threads_enabled) {
-			GLint half = h / 2;
-			tex_job.src = src + half * c->zb->xsize;
-			tex_job.dst = data + half * w;
-			tex_job.src_stride = c->zb->xsize * sizeof(PIXEL);
-			tex_job.dst_stride = w * sizeof(PIXEL);
-			tex_job.width = w;
-			tex_job.lines = h - half;
-			tex_job.fn = row_copy_pixels;
-			step(&tex_thread);
-			for (j = 0; j < half; ++j)
-				memcpy(data + j * w, src + j * c->zb->xsize, w * sizeof(PIXEL));
-			lock(&tex_thread);
+		if (tgl_threads_enabled && w * h >= 4096) {
+			int total = NUM_TEX_THREADS + 1;
+			GLint strip = h / total;
+			for (int t = 0; t < NUM_TEX_THREADS; ++t) {
+				GLint start = t * strip;
+				tex_jobs[t].src = src + start * c->zb->xsize;
+				tex_jobs[t].dst = data + start * w;
+				tex_jobs[t].src_stride = c->zb->xsize * sizeof(PIXEL);
+				tex_jobs[t].dst_stride = w * sizeof(PIXEL);
+				tex_jobs[t].width = w;
+				tex_jobs[t].lines = strip;
+#if TGL_FEATURE_NO_COPY_COLOR == 1
+				tex_jobs[t].fn = row_copy_pixels_ncc;
+#else
+				tex_jobs[t].fn = row_copy_pixels;
+#endif
+				step_c11_lsthread(&tex_threads[t]);
+			}
+			GLint start = NUM_TEX_THREADS * strip;
+			for (j = start; j < h; ++j) {
+#if TGL_FEATURE_NO_COPY_COLOR == 1
+				row_copy_pixels_ncc(src + j * c->zb->xsize, data + j * w, w);
+#else
+				memcpy(data + j * w, src + j * c->zb->xsize, (size_t)w * sizeof(PIXEL));
+#endif
+			}
+			for (int t = 0; t < NUM_TEX_THREADS; ++t)
+				lock_c11_lsthread(&tex_threads[t]);
 		} else
 #endif
 		{
-			for (j = 0; j < h; ++j)
-				memcpy(data + j * w, src + j * c->zb->xsize, w * sizeof(PIXEL));
+			for (j = 0; j < h; ++j) {
+#if TGL_FEATURE_NO_COPY_COLOR == 1
+				row_copy_pixels_ncc(src + j * c->zb->xsize, data + j * w, w);
+#else
+				memcpy(data + j * w, src + j * c->zb->xsize, (size_t)w * sizeof(PIXEL));
+#endif
+			}
 		}
 	} else {
 		for (j = 0; j < h; ++j) {
@@ -445,19 +478,25 @@ void glopTexImage2D(GLParam* p) {
 	im->xsize = width;
 	im->ysize = height;
 #if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
-	if (tgl_threads_enabled) {
-		GLint half = height / 2;
-		tex_job.src = pixels1 + half * width * 3;
-		tex_job.dst = im->pixmap + half * width;
-		tex_job.src_stride = width * 3;
-		tex_job.dst_stride = width * sizeof(PIXEL);
-		tex_job.width = width;
-		tex_job.lines = height - half;
-		tex_job.fn = row_convert_rgb;
-		step(&tex_thread);
-		for (GLint y = 0; y < half; ++y)
+	if (tgl_threads_enabled && width * height >= 4096) {
+		int total = NUM_TEX_THREADS + 1;
+		GLint strip = height / total;
+		for (int t = 0; t < NUM_TEX_THREADS; ++t) {
+			GLint start = t * strip;
+			tex_jobs[t].src = pixels1 + start * width * 3;
+			tex_jobs[t].dst = im->pixmap + start * width;
+			tex_jobs[t].src_stride = width * 3;
+			tex_jobs[t].dst_stride = width * sizeof(PIXEL);
+			tex_jobs[t].width = width;
+			tex_jobs[t].lines = strip;
+			tex_jobs[t].fn = row_convert_rgb;
+			step_c11_lsthread(&tex_threads[t]);
+		}
+		GLint start = NUM_TEX_THREADS * strip;
+		for (GLint y = start; y < height; ++y)
 			row_convert_rgb(pixels1 + y * width * 3, im->pixmap + y * width, width);
-		lock(&tex_thread);
+		for (int t = 0; t < NUM_TEX_THREADS; ++t)
+			lock_c11_lsthread(&tex_threads[t]);
 	} else
 #endif
 	{
