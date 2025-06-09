@@ -21,23 +21,15 @@ uninstall:
 	rm -f $(LIBDIR)/$(LIBNAME)
 	rm -rf $(INCDIR)/tinygl
 
-SDL_Examples: $(LIB)
-	@echo "These demos require SDL 1.2 to compile."
-	cd SDL_Examples && $(MAKE) && cd ..
-
-tglgears: $(LIB)
-	@echo "These demos require SDL 1.2 to compile."
-	cd SDL_Examples && $(MAKE) install_tglgears && cd ..
 
 RDMOS: $(LIB)
 	@echo "Building the RAW DEMOS. These do not require anything special on your system, so they should succeed."
 	cd Raw_Demos && $(MAKE) && cd ..
 	
 clean:
-	cd src && $(MAKE) clean && cd ..
-	cd SDL_Examples && $(MAKE) clean && cd ..
-	cd Raw_Demos && $(MAKE) clean && cd ..
-	cd lib && rm -f *.a && cd ..
+        cd src && $(MAKE) clean && cd ..
+        cd Raw_Demos && $(MAKE) clean && cd ..
+        cd lib && rm -f *.a && cd ..
 #clean:
 #	rm -f *~ *.o *.a
 #	cd SDL_Examples && $(MAKE) clean && cd ..

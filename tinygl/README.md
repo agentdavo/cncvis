@@ -266,11 +266,6 @@ ar rcs libTinyGL.a *.o
 #the library is now compiled
 cp libTinyGL.a ../lib
 cd ..
-cd SDL_Examples/
-#build the menu demo
-gcc -O3 menu.c -o menu -lSDL ../lib/libTinyGL.a -lm
-#gears
-gcc -O3 gears.c -o gears -lSDL ../lib/libTinyGL.a -lm
 ```
 
 This is how you use TinyGL in a program:
@@ -280,6 +275,7 @@ This is how you use TinyGL in a program:
 //(Note that you must either link against libTinyGL.a or compile it in the same
 // compilation unit as your program)
 #include "../include/GL/gl.h"
+#include "../include/GL/tinygl_ext.h" /* optional TinyGL helpers */
 #include "../include/zbuffer.h"
 
 /*
@@ -336,7 +332,6 @@ There is no FILE* usage, or I/O outside of 'msghandling.c' so if you want to rem
 ### Multithreading support
 
 TinyGL uses a small lock-step worker thread to speed up a few heavy operations.
-No OpenMP runtime is required.
 
 
 These are the operations that are accelerated by multithreading:
