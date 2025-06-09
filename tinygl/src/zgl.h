@@ -357,6 +357,7 @@ typedef struct GLContext {
 } GLContext;
 
 extern GLContext gl_ctx;
+extern int tgl_threads_enabled;
 static GLContext* gl_get_context(void) { return &gl_ctx; }
 
 extern void (*op_table_func[])(GLParam*);

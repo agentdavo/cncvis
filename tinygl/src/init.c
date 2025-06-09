@@ -1,6 +1,7 @@
 #include "msghandling.h"
 #include "zgl.h"
 GLContext gl_ctx;
+int tgl_threads_enabled = 1;
 static const GLContext empty_gl_ctx = {0};
 
 static void initSharedState(GLContext* c) {
