@@ -24,7 +24,7 @@ HOW TO BUILD THINGS USING THIS LIBRARY
 
 #ifdef CHAD_API_IMPL
 #endif
-#include "chad_math.h"
+#include "../src/zmath.h"
 typedef unsigned char uchar;
 
 extern uint R_;

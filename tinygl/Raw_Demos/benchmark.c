@@ -683,10 +683,7 @@ int main(int argc, char **argv) {
   glTexImage2D(GL_TEXTURE_2D, 0, 3, 32, 32, 0, GL_RGB, GL_UNSIGNED_BYTE,
                texbuf_small);
 
-  printf("\n== Non-threaded ==\n");
-  tgl_threads_enabled = 0;
-  run_all(loops);
-  printf("\n== Threaded ==\n");
+  printf("\n== Benchmark ==\n");
   tgl_threads_enabled = 1;
   run_all(loops);
 

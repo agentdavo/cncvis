@@ -19,8 +19,8 @@
 #include "../include/GL/gl.h"
 
 // Doesn't drag in anything.
-#include "../include-demo/chad_math.h"
 #include "../include/zbuffer.h"
+#include "../src/zmath.h"
 
 // Requires
 /*

@@ -1,11 +1,9 @@
-#include "../include/GL/gl.h"
-#include "../include/zbuffer.h"
 #include "font8x8_basic.h"
-#include "zgl.h"
-
-#include <stdlib.h>
+#include "gl_extensions.h"
+#include "gl_utils.h"
 
 void glTextSize(GLTEXTSIZE mode) {
+	GLParam p[2];
 #define NEED_CONTEXT
 #include "error_check_no_context.h"
 #if TGL_FEATURE_ERROR_CHECK == 1
@@ -13,23 +11,23 @@ void glTextSize(GLTEXTSIZE mode) {
 #define ERROR_FLAG GL_INVALID_ENUM
 #include "error_check.h"
 #endif
-		GLParam p[2];
-	p[0].op = OP_TextSize;
+		p[0].op = OP_TextSize;
 	p[1].ui = mode;
 	gl_add_op(p);
 }
+
 void glopTextSize(GLParam* p) {
 	GLContext* c = gl_get_context();
 	c->textsize = p[1].ui;
 }
+
 static void renderchar(const GLubyte* bitmap, GLint _x, GLint _y, GLuint p) {
 	GLint x, y, i, j;
-	GLint set;
 	GLContext* c = gl_get_context();
 	GLint mult = c->textsize;
 	for (x = 0; x < 8; x++) {
 		for (y = 0; y < 8; y++) {
-			set = bitmap[x] & (1u << y);
+			int set = bitmap[x] & (1u << y);
 			if (set)
 				for (i = 0; i < mult; i++)
 					for (j = 0; j < mult; j++)
@@ -63,17 +61,16 @@ void glPlotPixel(GLint x, GLint y, GLuint pix) {
 		gl_add_op(p);
 	}
 }
+
 void glDrawText(const GLubyte* text, GLint x, GLint y, GLuint p) {
 	GLContext* c = gl_get_context();
 	GLint i = 0;
 #include "error_check.h"
-
 #if TGL_FEATURE_ERROR_CHECK == 1
 	if (!text)
 #define ERROR_FLAG GL_INVALID_VALUE
 #include "error_check.h"
 #endif
-
 		GLint w = c->zb->xsize;
 	GLint h = c->zb->ysize;
 	GLint xoff = 0;
@@ -88,4 +85,11 @@ void glDrawText(const GLubyte* text, GLint x, GLint y, GLuint p) {
 			yoff += 8 * mult;
 		}
 	}
+}
+
+void glPostProcess(GLuint (*postprocess)(GLint x, GLint y, GLuint pixel, GLushort z)) {
+	GLContext* c = gl_get_context();
+	for (int j = 0; j < c->zb->ysize; j++)
+		for (int i = 0; i < c->zb->xsize; i++)
+			c->zb->pbuf[i + j * (c->zb->xsize)] = postprocess(i, j, c->zb->pbuf[i + j * (c->zb->xsize)], c->zb->zbuf[i + j * (c->zb->xsize)]);
 }

@@ -1,6 +1,6 @@
 #include "zgl.h"
 
-#include "msghandling.h"
+#include "gl_utils.h"
 
 static GLint free_buffer(GLint handle) {
 	GLContext* c = gl_get_context();

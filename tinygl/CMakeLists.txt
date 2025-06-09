@@ -54,6 +54,9 @@ if(TINYGL_BUILD_EXAMPLES)
 
 endif()
 
+# Unit tests
+add_subdirectory(tests)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

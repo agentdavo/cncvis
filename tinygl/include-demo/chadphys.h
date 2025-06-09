@@ -1,9 +1,9 @@
 #ifndef CHAD_PHYS_H
 #define CHAD_PHYS_H
-#include "chad_math.h"
+#include "../src/zmath.h"
 typedef struct {
-  aabb shape; // c.d[3] is sphere radius.
-              // if it's zero or less, it's not a sphere, it's a box
+  aabb shape;     // c.d[3] is sphere radius.
+                  // if it's zero or less, it's not a sphere, it's a box
   mat4 localt;    // Local Transform.
   vec3 v;         // velocity
   vec3 a;         // Body specific acceleration, combined with gravity
@@ -122,8 +122,8 @@ static inline void resolveBodies(phys_body *a, phys_body *b) {
     float test =
         dotv3(b_relvel, penvecnormalized); // the component in that direction
     if (test < 0)
-      b_planarvel = subv3(b_relvel, // brelvel - portion of brelvel in the
-                                    // direction of penvecnormalized
+      b_planarvel = subv3(b_relvel,     // brelvel - portion of brelvel in the
+                                        // direction of penvecnormalized
                           scalev3(test, // the component in that direction
                                   penvecnormalized // that direction
                                   ));

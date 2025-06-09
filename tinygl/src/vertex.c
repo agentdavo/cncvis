@@ -1,3 +1,4 @@
+#include "gl_vertex.h"
 #include "zgl.h"
 #include <math.h>
 #include <string.h>
@@ -406,4 +407,123 @@ void glopEnd(GLParam* param) {
 		}
 #endif
 	c->in_begin = 0;
+}
+
+/* Wrappers moved from api.c */
+void glBegin(GLint mode) {
+	GLParam p[2];
+#define NEED_CONTEXT
+#include "error_check_no_context.h"
+	p[0].op = OP_Begin;
+	p[1].i = mode;
+#if TGL_FEATURE_ERROR_CHECK == 1
+	if (mode != GL_POINTS && mode != GL_LINES && mode != GL_LINE_LOOP && mode != GL_LINE_STRIP &&
+#if TGL_FEATURE_GL_POLYGON == 1
+		mode != GL_POLYGON &&
+#endif
+		mode != GL_TRIANGLES && mode != GL_TRIANGLE_FAN && mode != GL_TRIANGLE_STRIP && mode != GL_QUADS && mode != GL_QUAD_STRIP)
+#define ERROR_FLAG GL_INVALID_ENUM
+#include "error_check.h"
+#endif
+		gl_add_op(p);
+}
+
+void glEnd(void) {
+	GLParam p[1];
+#include "error_check_no_context.h"
+	p[0].op = OP_End;
+
+	gl_add_op(p);
+}
+void glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
+	GLParam p[5];
+#include "error_check_no_context.h"
+	p[0].op = OP_Vertex;
+	p[1].f = x;
+	p[2].f = y;
+	p[3].f = z;
+	p[4].f = w;
+	gl_add_op(p);
+}
+
+void glVertex2f(GLfloat x, GLfloat y) { glVertex4f(x, y, 0, 1); }
+void glVertex3f(GLfloat x, GLfloat y, GLfloat z) { glVertex4f(x, y, z, 1); }
+void glVertex3fv(GLfloat* v) { glVertex4f(v[0], v[1], v[2], 1); }
+
+void glNormal3f(GLfloat x, GLfloat y, GLfloat z) {
+	GLParam p[4];
+#include "error_check_no_context.h"
+	p[0].op = OP_Normal;
+	p[1].f = x;
+	p[2].f = y;
+	p[3].f = z;
+	gl_add_op(p);
+}
+void glNormal3fv(GLfloat* v) { glNormal3f(v[0], v[1], v[2]); }
+
+void glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
+	GLParam p[8];
+#include "error_check_no_context.h"
+	p[0].op = OP_Color;
+	p[1].f = r;
+	p[2].f = g;
+	p[3].f = b;
+	p[4].f = a;
+	p[5].ui = (((GLuint)(r * 255.0f + 0.5f) << 16) & COLOR_MASK);
+	p[6].ui = (((GLuint)(g * 255.0f + 0.5f) << 8) & COLOR_MASK);
+	p[7].ui = (((GLuint)(b * 255.0f + 0.5f)) & COLOR_MASK);
+	gl_add_op(p);
+}
+
+void glColor4fv(GLfloat* v) {
+	GLParam p[8];
+#include "error_check_no_context.h"
+	p[0].op = OP_Color;
+	p[1].f = v[0];
+	p[2].f = v[1];
+	p[3].f = v[2];
+	p[4].f = v[3];
+	p[5].ui = (((GLuint)(v[0] * 255.0f + 0.5f) << 16) & COLOR_MASK);
+	p[6].ui = (((GLuint)(v[1] * 255.0f + 0.5f) << 8) & COLOR_MASK);
+	p[7].ui = (((GLuint)(v[2] * 255.0f + 0.5f)) & COLOR_MASK);
+	gl_add_op(p);
+}
+
+void glColor3f(GLfloat x, GLfloat y, GLfloat z) { glColor4f(x, y, z, 1); }
+void glColor3fv(GLfloat* v) { glColor4f(v[0], v[1], v[2], 1); }
+
+void glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q) {
+	GLParam p[5];
+#include "error_check_no_context.h"
+	p[0].op = OP_TexCoord;
+	p[1].f = s;
+	p[2].f = t;
+	p[3].f = r;
+	p[4].f = q;
+	gl_add_op(p);
+}
+void glTexCoord2f(GLfloat s, GLfloat t) { glTexCoord4f(s, t, 0, 1); }
+void glTexCoord2fv(GLfloat* v) { glTexCoord4f(v[0], v[1], 0, 1); }
+
+void glEdgeFlag(GLint flag) {
+	GLParam p[2];
+#define NEED_CONTEXT
+#include "error_check_no_context.h"
+#if TGL_FEATURE_ERROR_CHECK == 1
+	if (flag != GL_TRUE && flag != GL_FALSE)
+#define ERROR_FLAG GL_INVALID_ENUM
+#include "error_check.h"
+#endif
+		p[0].op = OP_EdgeFlag;
+	p[1].i = flag;
+	gl_add_op(p);
+}
+
+void glRectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2) {
+	glBegin(GL_QUADS);
+	glVertex2f(x1, y1);
+	glVertex2f(x2, y1);
+	glVertex2f(x2, y2);
+	glVertex2f(x1, y2);
+	glEnd();
 }
