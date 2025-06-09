@@ -8,11 +8,7 @@ Written by Gek (DMHSW) in 2020
 
 /*
 HOW TO BUILD THINGS USING THIS LIBRARY
-#define CHAD_API_IMPL
-^ This line goes in the file you want the "implementation" in.
-#include "api_audio.h"
-
-
+Include this header in one source file to generate the implementation.
 */
 #define USE_MIXER
 
@@ -22,9 +18,7 @@ HOW TO BUILD THINGS USING THIS LIBRARY
 #define SDL_MAIN_HANDLED
 #include <SDL/SDL.h>
 
-#ifdef CHAD_API_IMPL
-#endif
-#include "chad_math.h"
+#include "../src/zmath.h"
 typedef unsigned char uchar;
 
 extern uint R_;
@@ -46,7 +40,6 @@ void aPos(int chan, int angle, unsigned char dist);
 void aHalt(int chan);
 int mplay(track *mus, int loops, int ms);
 void mhalt();
-#ifdef CHAD_API_IMPL
 void ainit(int needsSDLINIT) {
   if (needsSDLINIT)
     if (SDL_Init(SDL_INIT_AUDIO) != 0) {
@@ -77,7 +70,4 @@ int mplay(track *mus, int loops, int ms) {
   return Mix_FadeInMusic(mus, loops, ms);
 }
 void mhalt() { Mix_HaltMusic(); }
-
-#endif
-
 #endif

@@ -3,29 +3,27 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 set(tinygl_srcs
   accum.c
   api.c
+  state.c
   arrays.c
   clear.c
   clip.c
-  get.c
-  image_util.c
+  misc.c
+  utils.c
   init.c
-  light.c
+  lighting.c
   list.c
   matrix.c
   memory.c
-  misc.c
-  msghandling.c
-  select.c
-  specbuf.c
+  lockstepthread.c
+  selection.c
   texture.c
   vertex.c
   zbuffer.c
-  zline.c
   zmath.c
-  zpostprocess.c
-  zraster.c
-  ztext.c
-  ztriangle.c
+  raster.c
+  extensions.c
+  evaluators.c
+  fog.c
   )
 
 find_package(Threads REQUIRED)

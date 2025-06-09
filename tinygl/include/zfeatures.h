@@ -75,7 +75,7 @@ the maximum number of vertices in a polygon is defined in zgl.h
 #define TGL_COLOR_MASK 0x00ffffff
 /* mask to check for while drawing/copying.*/
 
-#define TGL_FEATURE_MULTITHREADED_DRAWPIXELS 0
+#define TGL_FEATURE_MULTITHREADED_DRAWPIXELS 1
 
 #define TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D 1
 

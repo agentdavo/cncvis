@@ -6,9 +6,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#include "chad_math.h"
-#define CHAD_API_IMPL
 #include "tinygl/include/zbuffer.h"
+#include "tinygl/src/zmath.h"
 
 ZBuffer *globalFramebuffer = NULL;
 ucncAssembly *globalScene = NULL;

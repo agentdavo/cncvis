@@ -11,7 +11,7 @@ Written by Gek (DMHSW) in 2020
 #ifndef TOBJ_PARSE_H
 #define TOBJ_PARSE_H
 /*TODO: fix.*/
-#include "chad_math.h"
+#include "../src/zmath.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
