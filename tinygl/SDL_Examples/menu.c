@@ -5,7 +5,7 @@ Demo of Gek's proposed Open Immediate Mode Gui Standard
 
 
 */
-//#define PLAY_MUSIC
+// #define PLAY_MUSIC
 
 #include <math.h>
 #include <stdio.h>
@@ -16,8 +16,7 @@ Demo of Gek's proposed Open Immediate Mode Gui Standard
 
 #include "../include/zbuffer.h"
 #define CHAD_API_IMPL
-#define CHAD_MATH_IMPL
-#include "../include-demo/3dMath.h"
+#include "../include-demo/chad_math.h"
 #ifdef PLAY_MUSIC
 #include "../include-demo/api_audio.h"
 #else
@@ -121,9 +120,9 @@ void drawTB(const char* text, GLuint textcolor, GLfloat x, GLfloat y, GLint size
 		if (mw < cw)
 			mw = cw;
 	}
-	float w = (size)*8 * (mw) / (float)winSizeX;
+	float w = (size) * 8 * (mw) / (float)winSizeX;
 	float bw = 3 * size / (float)winSizeX;
-	float h_ = (size)*8 * (h) / (float)winSizeY;
+	float h_ = (size) * 8 * (h) / (float)winSizeY;
 	float bh = 3 * size / (float)winSizeY;
 	drawBox(x, y, w, h_);
 	*tw = w + bw;

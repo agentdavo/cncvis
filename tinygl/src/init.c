@@ -1,6 +1,7 @@
 #include "msghandling.h"
 #include "zgl.h"
 GLContext gl_ctx;
+int tgl_threads_enabled = 1;
 static const GLContext empty_gl_ctx = {0};
 
 static void initSharedState(GLContext* c) {
@@ -101,20 +102,20 @@ static int TinyGLRuntimeCompatibilityTest() {
 		return 1;
 #if TGL_FEATURE_FISR == 1
 	t = fastInvSqrt(37);
-	tf2 = 1.0 / sqrt(37);
+	tf2 = 1.0f / sqrtf(37.0f);
 	if (TGL_FLOAT_ERR(t, tf2) > 0.05)
 		return 1;
 	t = fastInvSqrt(59);
-	tf2 = 1.0 / sqrt(59);
+	tf2 = 1.0f / sqrtf(59.0f);
 	if (TGL_FLOAT_ERR(t, tf2) > 0.05)
 		return 1;
 	t = fastInvSqrt(1023);
-	tf2 = 1.0 / sqrt(1023);
+	tf2 = 1.0f / sqrtf(1023.0f);
 	if (TGL_FLOAT_ERR(t, tf2) > 0.05)
 		return 1;
 
 	t = fastInvSqrt(10000);
-	tf2 = 1.0 / sqrt(10000);
+	tf2 = 1.0f / sqrtf(10000.0f);
 	if (TGL_FLOAT_ERR(t, tf2) > 0.05)
 		return 1;
 #endif
@@ -239,6 +240,9 @@ void glInit(void* zbuffer1) {
 	/* textures */
 	/*glInitTextures(c);*/
 	glInitTextures(); // Bug Fix!
+#if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
+	init_raster_threads();
+#endif
 
 	/* blending */
 	c->zb->enable_blend = 0;
@@ -317,6 +321,9 @@ void glInit(void* zbuffer1) {
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	/* Avoid lighting artifacts with scaled models */
+	glEnable(GL_NORMALIZE);
 
 	c->matrix_model_projection_updated = 1;
 
@@ -399,6 +406,10 @@ void glClose(void) {
 		}
 	}
 #endif
+#if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
+	end_raster_threads();
+#endif
+	glEndTextures();
 	endSharedState(c);
 	gl_ctx = empty_gl_ctx;
 }

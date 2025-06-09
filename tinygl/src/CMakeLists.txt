@@ -28,7 +28,7 @@ set(tinygl_srcs
   ztriangle.c
   )
 
-find_package(OpenMP)
+find_package(Threads REQUIRED)
 
 if(TINYGL_BUILD_SHARED)
   add_library(tinygl SHARED ${tinygl_srcs})
@@ -43,9 +43,7 @@ if(TINYGL_BUILD_SHARED)
       target_compile_options(tinygl PRIVATE -march=x86-64 -mtune=generic)
     endif()
   endif(NOT MSVC)
-  if(OPENMP_C_FOUND)
-    target_link_libraries(tinygl PUBLIC OpenMP::OpenMP_C)
-  endif(OPENMP_C_FOUND)
+  target_link_libraries(tinygl PRIVATE Threads::Threads)
 endif(TINYGL_BUILD_SHARED)
 
 if(TINYGL_BUILD_STATIC)
@@ -61,9 +59,7 @@ if(TINYGL_BUILD_STATIC)
       target_compile_options(tinygl-static PRIVATE -march=x86-64 -mtune=generic)
     endif()
   endif(NOT MSVC)
-  if(OPENMP_C_FOUND)
-    target_link_libraries(tinygl-static PUBLIC OpenMP::OpenMP_C)
-  endif(OPENMP_C_FOUND)
+  target_link_libraries(tinygl-static PRIVATE Threads::Threads)
 endif(TINYGL_BUILD_STATIC)
 
 # Local Variables:

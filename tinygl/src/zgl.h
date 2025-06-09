@@ -120,7 +120,7 @@ typedef struct GLList {
 	/* TODO: extensions for an hash table or a better allocating scheme */
 } GLList;
 
-typedef struct GLVertex {
+typedef struct __attribute__((aligned(16))) GLVertex {
 
 	V3 normal;
 	V4 coord;
@@ -357,6 +357,7 @@ typedef struct GLContext {
 } GLContext;
 
 extern GLContext gl_ctx;
+extern int tgl_threads_enabled;
 static GLContext* gl_get_context(void) { return &gl_ctx; }
 
 extern void (*op_table_func[])(GLParam*);
@@ -458,7 +459,7 @@ void gl_resizeImageNoInterpolate(GLubyte* dest, GLint xsize_dest, GLint ysize_de
 void gl_fatal_error(char* format, ...);
 
 /* specular buffer "api" */
-GLSpecBuf* specbuf_get_buffer(const GLint shininess_i, const GLfloat shininess);
+GLSpecBuf* specbuf_get_buffer(GLContext* c, const GLint shininess_i, const GLfloat shininess);
 
 /* glopXXX functions */
 

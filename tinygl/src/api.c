@@ -52,9 +52,9 @@ void glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
 	p[2].f = g;
 	p[3].f = b;
 	p[4].f = a;
-	p[5].ui = (((GLuint)(r * COLOR_CORRECTED_MULT_MASK) + COLOR_MIN_MULT) & COLOR_MASK);
-	p[6].ui = (((GLuint)(g * COLOR_CORRECTED_MULT_MASK) + COLOR_MIN_MULT) & COLOR_MASK);
-	p[7].ui = (((GLuint)(b * COLOR_CORRECTED_MULT_MASK) + COLOR_MIN_MULT) & COLOR_MASK);
+	p[5].ui = (((GLuint)(r * 255.0f + 0.5f) << 16) & COLOR_MASK);
+	p[6].ui = (((GLuint)(g * 255.0f + 0.5f) << 8) & COLOR_MASK);
+	p[7].ui = (((GLuint)(b * 255.0f + 0.5f)) & COLOR_MASK);
 	gl_add_op(p);
 }
 
@@ -66,9 +66,9 @@ void glColor4fv(GLfloat* v) {
 	p[2].f = v[1];
 	p[3].f = v[2];
 	p[4].f = v[3];
-	p[5].ui = (((GLuint)(v[0] * COLOR_CORRECTED_MULT_MASK) + COLOR_MIN_MULT) & COLOR_MASK);
-	p[6].ui = (((GLuint)(v[1] * COLOR_CORRECTED_MULT_MASK) + COLOR_MIN_MULT) & COLOR_MASK);
-	p[7].ui = (((GLuint)(v[2] * COLOR_CORRECTED_MULT_MASK) + COLOR_MIN_MULT) & COLOR_MASK);
+	p[5].ui = (((GLuint)(v[0] * 255.0f + 0.5f) << 16) & COLOR_MASK);
+	p[6].ui = (((GLuint)(v[1] * 255.0f + 0.5f) << 8) & COLOR_MASK);
+	p[7].ui = (((GLuint)(v[2] * 255.0f + 0.5f)) & COLOR_MASK);
 
 	gl_add_op(p);
 }

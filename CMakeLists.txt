@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(cncvis LANGUAGES C)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
@@ -33,6 +33,7 @@ add_library(cncvis STATIC
 target_include_directories(cncvis PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${TGL_DIR}/include
+    ${TGL_DIR}/include-demo
     ${STLIO_DIR}/include
     ${STB_DIR}
     ${MXML_DIR}
@@ -92,6 +93,7 @@ add_executable(cncvis_test cncvis_test.c)
 target_include_directories(cncvis_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${TGL_DIR}/include
+    ${TGL_DIR}/include-demo
     ${STLIO_DIR}/include
     ${STB_DIR}
     ${MXML_DIR}
