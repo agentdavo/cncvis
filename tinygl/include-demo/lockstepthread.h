@@ -38,6 +38,7 @@ void kill_lsthread(lsthread *t);
 void destroy_lsthread(lsthread *t);
 void lock(lsthread *t);
 void step(lsthread *t);
+
 #ifdef LOCKSTEPTHREAD_IMPL
 // function declarations
 
@@ -50,10 +51,12 @@ void init_lsthread(lsthread *t) {
   t->execute = NULL;
   t->argument = NULL;
 }
+
 void destroy_lsthread(lsthread *t) {
   pthread_mutex_destroy(&t->myMutex);
   pthread_barrier_destroy(&t->myBarrier);
 }
+
 void lock(lsthread *t) {
   if (t->state == 1)
     return; // if already locked, nono
@@ -81,6 +84,7 @@ void step(lsthread *t) {
   t->state = -1;
   // exit(1)
 }
+
 void kill_lsthread(lsthread *t) {
   if (!t->isThreadLive)
     return;
@@ -100,6 +104,7 @@ void kill_lsthread(lsthread *t) {
   t->isThreadLive = false;
   t->shouldKillThread = false;
 }
+
 static void *lsthread_func(void *me_void) {
   lsthread *me = (lsthread *)me_void;
   if (!me)
@@ -118,6 +123,7 @@ static void *lsthread_func(void *me_void) {
   }
   pthread_exit(NULL);
 }
+
 void start_lsthread(lsthread *t) {
   if (t->isThreadLive)
     return;

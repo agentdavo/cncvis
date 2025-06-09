@@ -15,6 +15,7 @@
 #include "../include/zbuffer.h"
 #include "msghandling.h"
 #include "zgl.h"
+
 #if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
 #define LOCKSTEPTHREAD_IMPL
 #include "../include-demo/lockstepthread.h"
@@ -192,7 +193,7 @@ static void ZB_copyBuffer(ZBuffer* restrict zb, void* restrict buf, GLint linesi
 		copy_job.stride = linesize;
 		copy_job.lines = zb->ysize - half;
 		step(&copy_thread);
-	}
+  }
 #endif
 	copy_rows(zb->pbuf, buf, half, zb->xsize, linesize);
 #if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
