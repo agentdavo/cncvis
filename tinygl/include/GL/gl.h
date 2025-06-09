@@ -828,11 +828,7 @@ void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                   GLenum format, GLenum type, void *data);
 void glDrawArrays(GLenum mode, GLint first, GLsizei count);
 
-void glSetEnableSpecular(GLint s);
-void *glGetTexturePixmap(GLint text, GLint level, GLint *xsize, GLint *ysize);
-void glDrawText(const GLubyte *text, GLint x, GLint y, GLuint pixel);
-void glTextSize(GLTEXTSIZE mode);
-void glPlotPixel(GLint x, GLint y, GLuint pixel);
+#include "tinygl_ext.h" /* TinyGL specific helper functions */
 
 #define PROTO_GL1(name)                                                        \
   void gl##name##1f(GLfloat);                                                  \

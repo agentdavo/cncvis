@@ -4,7 +4,7 @@
 
 #include "zgl.h"
 #if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
-#include "../include-demo/lockstepthread.h"
+#include "lockstepthread.h"
 
 #define NUM_TEX_THREADS 4
 typedef void (*RowFunc)(const void*, void*, GLint);

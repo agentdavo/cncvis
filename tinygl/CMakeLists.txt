@@ -50,8 +50,7 @@ if(TINYGL_BUILD_EXAMPLES)
   # after compilation...
   add_subdirectory(Raw_Demos)
 
-  # Examples that use SDL for interactive display
-  add_subdirectory(SDL_Examples)
+  # SDL examples were removed; only raw demos remain
 
 endif()
 

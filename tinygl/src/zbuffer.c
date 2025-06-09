@@ -11,7 +11,7 @@
 #include "zgl.h"
 #if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
 #define LOCKSTEPTHREAD_IMPL
-#include "../include-demo/lockstepthread.h"
+#include "lockstepthread.h"
 #endif
 
 #if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
