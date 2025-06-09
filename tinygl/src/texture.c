@@ -20,9 +20,9 @@ typedef struct {
 static c11_lsthread tex_threads[NUM_TEX_THREADS];
 static TexJob tex_jobs[NUM_TEX_THREADS];
 
-static void row_copy_pixels(const void* src, void* dst, GLint w) { memcpy(dst, src, (size_t)w * sizeof(PIXEL)); }
+static inline void row_copy_pixels(const void* restrict src, void* restrict dst, GLint w) { memcpy(dst, src, (size_t)w * sizeof(PIXEL)); }
 #if TGL_FEATURE_NO_COPY_COLOR == 1
-static void row_copy_pixels_ncc(const void* src, void* dst, GLint w) {
+static inline void row_copy_pixels_ncc(const void* restrict src, void* restrict dst, GLint w) {
 	const PixelQuad* s = (const PixelQuad*)src;
 	PixelQuad* d = (PixelQuad*)dst;
 	GLint n = w >> 2;
@@ -40,7 +40,7 @@ static void row_copy_pixels_ncc(const void* src, void* dst, GLint w) {
 }
 #endif
 #if TGL_FEATURE_RENDER_BITS == 32
-static void row_convert_rgb(const void* src, void* dst, GLint w) {
+static inline void row_convert_rgb(const void* restrict src, void* restrict dst, GLint w) {
 	const GLubyte* s = (const GLubyte*)src;
 	PIXEL* d = (PIXEL*)dst;
 	for (GLint i = 0; i < w; ++i) {
@@ -49,7 +49,7 @@ static void row_convert_rgb(const void* src, void* dst, GLint w) {
 	}
 }
 #elif TGL_FEATURE_RENDER_BITS == 16
-static void row_convert_rgb(const void* src, void* dst, GLint w) {
+static inline void row_convert_rgb(const void* restrict src, void* restrict dst, GLint w) {
 	const GLubyte* s = (const GLubyte*)src;
 	GLushort* d = (GLushort*)dst;
 	for (GLint i = 0; i < w; ++i) {
