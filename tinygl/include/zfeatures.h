@@ -35,7 +35,7 @@ with it.
 
 #define TGL_FEATURE_LIT_TEXTURES 1
 /*Enable the patternized "discard"-ing of pixels.*/
-#define TGL_FEATURE_POLYGON_STIPPLE 1
+#define TGL_FEATURE_POLYGON_STIPPLE 0
 /*Enable the use of GL_SELECT and GL_FEEDBACK*/
 #define TGL_FEATURE_ALT_RENDERMODES 0
 /*
@@ -61,12 +61,12 @@ the maximum number of vertices in a polygon is defined in zgl.h
 #define TGL_POLYGON_STIPPLE_MASK_Y 31
 
 /*Use lookup tables for calculating specular light.*/
-#define TGL_FEATURE_SPECULAR_BUFFERS 0
+#define TGL_FEATURE_SPECULAR_BUFFERS 1
 
 /*Prevent ZB_copyFrameBuffer from copying certain colors.*/
 #define TGL_FEATURE_NO_COPY_COLOR 0
 /*Don't draw (texture mapped) pixels whose color is the NO_DRAW_COLOR*/
-#define TGL_FEATURE_NO_DRAW_COLOR 1
+#define TGL_FEATURE_NO_DRAW_COLOR 0
 /*Regardless of the current clear color, always clear using the NO_COPY_COLOR*/
 #define TGL_FEATURE_FORCE_CLEAR_NO_COPY_COLOR 0
 #define TGL_NO_COPY_COLOR 0xff00ff
@@ -75,11 +75,12 @@ the maximum number of vertices in a polygon is defined in zgl.h
 #define TGL_COLOR_MASK 0x00ffffff
 /* mask to check for while drawing/copying.*/
 
-#define TGL_FEATURE_MULTITHREADED_DRAWPIXELS 1
+#define TGL_FEATURE_MULTITHREADED_DRAWPIXELS 0
 
 #define TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D 1
 
 #define TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER 1
+#define TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE 1
 
 /*
 !!!!!WARNING!!!!!
@@ -132,7 +133,7 @@ work best on this setting.
 #define ZB_POINT_T_FRAC_BITS (ZB_POINT_S_FRAC_BITS + TGL_FEATURE_TEXTURE_POW2)
 
 /*Test the compatibility of the target platform at glInit() time.*/
-#define TGL_FEATURE_TINYGL_RUNTIME_COMPAT_TEST 1
+#define TGL_FEATURE_TINYGL_RUNTIME_COMPAT_TEST 0
 
 #define TINYGL_VERSION 1.0
 

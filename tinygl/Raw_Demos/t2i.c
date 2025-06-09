@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   if (TGL_FEATURE_RENDER_BITS == 32)
     frameBuffer = ZB_open(winSizeX, winSizeY, ZB_MODE_RGBA, 0);
   else
-    frameBuffer = ZB_open(winSizeX, winSizeY, ZB_MODE_5R6G5B, 0);
+    frameBuffer = ZB_open(winSizeX, winSizeY, ZB_MODE_RGBA, 0);
   if (!frameBuffer) {
     printf("\nZB_open failed!");
     exit(1);

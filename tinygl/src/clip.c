@@ -21,9 +21,9 @@ static void gl_transform_to_viewport_clip_c(GLVertex* v) { /* MARK: NOT_INLINED_
 		v->zp.z = (GLint)(v->pc.Z * winv * c->viewport.scale.Z + c->viewport.trans.Z);
 	}
 	/* color */
-	v->zp.r = (GLint)(v->color.v[0] * COLOR_CORRECTED_MULT_MASK + COLOR_MIN_MULT) & COLOR_MASK;
-	v->zp.g = (GLint)(v->color.v[1] * COLOR_CORRECTED_MULT_MASK + COLOR_MIN_MULT) & COLOR_MASK;
-	v->zp.b = (GLint)(v->color.v[2] * COLOR_CORRECTED_MULT_MASK + COLOR_MIN_MULT) & COLOR_MASK;
+	v->zp.r = ((GLint)(v->color.v[0] * 255.0f + 0.5f) << 16) & COLOR_MASK;
+	v->zp.g = ((GLint)(v->color.v[1] * 255.0f + 0.5f) << 8) & COLOR_MASK;
+	v->zp.b = ((GLint)(v->color.v[2] * 255.0f + 0.5f)) & COLOR_MASK;
 
 	/* texture */
 

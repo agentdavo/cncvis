@@ -459,7 +459,7 @@ void gl_resizeImageNoInterpolate(GLubyte* dest, GLint xsize_dest, GLint ysize_de
 void gl_fatal_error(char* format, ...);
 
 /* specular buffer "api" */
-GLSpecBuf* specbuf_get_buffer(const GLint shininess_i, const GLfloat shininess);
+GLSpecBuf* specbuf_get_buffer(GLContext* c, const GLint shininess_i, const GLfloat shininess);
 
 /* glopXXX functions */
 
