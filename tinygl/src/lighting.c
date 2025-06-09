@@ -1,5 +1,154 @@
-#include "msghandling.h"
+#include "gl_lighting.h"
+#include "gl_utils.h"
 #include "zgl.h"
+#include <math.h>
+#include <stdlib.h>
+
+#if TGL_FEATURE_SPECULAR_BUFFERS == 1
+static void calc_buf(GLSpecBuf* buf, const GLfloat shininess) {
+	GLint i;
+	GLfloat val, inc;
+	val = 0.0f;
+	inc = 1.0f / SPECULAR_BUFFER_SIZE;
+	for (i = 0; i <= SPECULAR_BUFFER_SIZE; i++) {
+		buf->buf[i] = pow(val, shininess);
+		val += inc;
+	}
+}
+
+GLSpecBuf* specbuf_get_buffer(GLContext* c, const GLint shininess_i, const GLfloat shininess) {
+	GLSpecBuf *found, *oldest;
+	found = oldest = c->specbuf_first;
+	while (found && found->shininess_i != shininess_i) {
+		if (found->last_used < oldest->last_used) {
+			oldest = found;
+		}
+		found = found->next;
+	}
+	if (found) {
+		found->last_used = c->specbuf_used_counter++;
+		return found;
+	}
+	if (oldest == NULL || c->specbuf_num_buffers < MAX_SPECULAR_BUFFERS) {
+		GLSpecBuf* buf = gl_malloc(sizeof(GLSpecBuf));
+#if TGL_FEATURE_ERROR_CHECK == 1
+		if (!buf)
+#define ERROR_FLAG GL_OUT_OF_MEMORY
+#define RETVAL NULL
+#include "error_check.h"
+#else
+
+#endif
+			c->specbuf_num_buffers++;
+		buf->next = c->specbuf_first;
+		c->specbuf_first = buf;
+		buf->last_used = c->specbuf_used_counter++;
+		buf->shininess_i = shininess_i;
+		calc_buf(buf, shininess);
+		return buf;
+	}
+	oldest->shininess_i = shininess_i;
+	oldest->last_used = c->specbuf_used_counter++;
+	calc_buf(oldest, shininess);
+	return oldest;
+}
+#endif
+
+/* Wrappers moved from api.c */
+void glMaterialfv(GLint mode, GLint type, GLfloat* v) {
+	GLParam p[7];
+	GLint i, n;
+#define NEED_CONTEXT
+#include "error_check_no_context.h"
+#if TGL_FEATURE_ERROR_CHECK == 1
+	if (!(mode == GL_FRONT || mode == GL_BACK || mode == GL_FRONT_AND_BACK))
+#define ERROR_FLAG GL_INVALID_ENUM
+#include "error_check.h"
+#else
+	/* assert(mode == GL_FRONT || mode == GL_BACK || mode == GL_FRONT_AND_BACK);*/
+#endif
+		p[0].op = OP_Material;
+	p[1].i = mode;
+	p[2].i = type;
+	n = 4;
+	if (type == GL_SHININESS)
+		n = 1;
+	for (i = 0; i < n; i++)
+		p[3 + i].f = v[i];
+	for (i = n; i < 4; i++)
+		p[3 + i].f = 0;
+	gl_add_op(p);
+}
+
+void glMaterialf(GLint mode, GLint type, GLfloat v) {
+	GLParam p[7];
+	GLint i;
+#include "error_check_no_context.h"
+	p[0].op = OP_Material;
+	p[1].i = mode;
+	p[2].i = type;
+	p[3].f = v;
+	for (i = 0; i < 3; i++)
+		p[4 + i].f = 0;
+	gl_add_op(p);
+}
+
+void glColorMaterial(GLint mode, GLint type) {
+	GLParam p[3];
+#include "error_check_no_context.h"
+	p[0].op = OP_ColorMaterial;
+	p[1].i = mode;
+	p[2].i = type;
+	gl_add_op(p);
+}
+
+void glLightfv(GLint light, GLint type, GLfloat* v) {
+	GLParam p[7];
+	GLint i;
+#include "error_check_no_context.h"
+	p[0].op = OP_Light;
+	p[1].i = light;
+	p[2].i = type;
+	for (i = 0; i < 4; i++)
+		p[3 + i].f = v[i];
+	gl_add_op(p);
+}
+
+void glLightf(GLint light, GLint type, GLfloat v) {
+	GLParam p[7];
+	GLint i;
+#include "error_check_no_context.h"
+	p[0].op = OP_Light;
+	p[1].i = light;
+	p[2].i = type;
+	p[3].f = v;
+	for (i = 0; i < 3; i++)
+		p[4 + i].f = 0;
+	gl_add_op(p);
+}
+
+void glLightModeli(GLint pname, GLint param) {
+	GLParam p[6];
+#include "error_check_no_context.h"
+	p[0].op = OP_LightModel;
+	p[1].i = pname;
+	p[2].f = (GLfloat)param;
+	p[3].f = 0;
+	p[4].f = 0;
+	p[5].f = 0;
+	gl_add_op(p);
+}
+
+void glLightModelfv(GLint pname, GLfloat* param) {
+	GLParam p[6];
+	GLint i;
+#include "error_check_no_context.h"
+	p[0].op = OP_LightModel;
+	p[1].i = pname;
+	for (i = 0; i < 4; i++)
+		p[2 + i].f = param[i];
+	gl_add_op(p);
+}
 
 void glopMaterial(GLParam* p) {
 	GLContext* c = gl_get_context();

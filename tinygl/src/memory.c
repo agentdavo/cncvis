@@ -1,13 +1,12 @@
-/*
- * Memory allocator for TinyGL
+/**
+ * @file memory.c
+ * @brief Allocation helpers for TinyGL.
  */
 
-static inline void required_for_compilation_(){
-	return;
-}
+static inline void required_for_compilation_() { return; }
 
 #if TGL_FEATURE_CUSTOM_MALLOC == 1
-#include "zgl.h"
+#include "internal.h"
 
 /* modify these functions so that they suit your needs */
 

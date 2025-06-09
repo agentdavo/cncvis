@@ -16,7 +16,7 @@ included in subdirectories.
 - **Lighting** – configure multiple OpenGL style lights.
 - **Camera API** – orbit, pan, zoom and preset views.
 - **On-screen display** – draw text and simple shapes over the 3D view.
-- **C11 vector math** – use `chad_math.h` for aligned calculations.
+- **C11 vector math** – use `zmath.h` for aligned calculations.
 - **Lock-step threading** – `tinygl/src/lockstepthread.h` uses the C11 `<threads.h>` API
   to run a worker thread in deterministic steps.
 - **32-bit ARGB pixel quads** – color buffers use 4‑pixel blocks aligned to

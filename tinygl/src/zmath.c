@@ -1,7 +1,12 @@
-/* Some simple mathematical functions. Don't look for some logic in
-   the function names :-) */
+/**
+ * @file zmath.c
+ * @brief Math helper functions used throughout TinyGL.
+ * Some simple mathematical functions. Don't look for some logic in
+ * the function names :-)
+ */
 
 #include "zmath.h"
+#include "internal.h"
 
 #include <stdlib.h>
 #include <string.h>

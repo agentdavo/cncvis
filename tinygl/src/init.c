@@ -1,4 +1,6 @@
-#include "msghandling.h"
+#include "gl_init.h"
+#include "gl_utils.h"
+#include "internal.h"
 #include "zgl.h"
 GLContext gl_ctx;
 int tgl_threads_enabled = 1;
@@ -240,9 +242,7 @@ void glInit(void* zbuffer1) {
 	/* textures */
 	/*glInitTextures(c);*/
 	glInitTextures(); // Bug Fix!
-#if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
 	init_raster_threads();
-#endif
 
 	/* blending */
 	c->zb->enable_blend = 0;
@@ -406,9 +406,7 @@ void glClose(void) {
 		}
 	}
 #endif
-#if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
 	end_raster_threads();
-#endif
 	glEndTextures();
 	endSharedState(c);
 	gl_ctx = empty_gl_ctx;

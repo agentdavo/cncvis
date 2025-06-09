@@ -1,0 +1,892 @@
+{
+  "glEnable": {
+    "category": "functions",
+    "files": [
+      "init.c",
+      "api.c"
+    ]
+  },
+  "glDisable": {
+    "category": "functions",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glShadeModel": {
+    "category": "functions",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glCullFace": {
+    "category": "functions",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glPolygonMode": {
+    "category": "functions",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glBegin": {
+    "category": "functions",
+    "files": [
+      "arrays.c",
+      "glu.c",
+      "api.c",
+      "vertex.c"
+    ]
+  },
+  "glEnd": {
+    "category": "functions",
+    "files": [
+      "arrays.c",
+      "glu.c",
+      "api.c"
+    ]
+  },
+  "glRectf": {
+    "category": "functions",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glDrawBuffer": {
+    "category": "functions",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glReadBuffer": {
+    "category": "functions",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glReadPixels": {
+    "category": "functions",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glDrawArrays": {
+    "category": "functions",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glEdgeFlag": {
+    "category": "functions",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glMatrixMode": {
+    "category": "matrix",
+    "files": [
+      "init.c",
+      "api.c"
+    ]
+  },
+  "glLoadMatrixf": {
+    "category": "matrix",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glLoadIdentity": {
+    "category": "matrix",
+    "files": [
+      "init.c",
+      "api.c"
+    ]
+  },
+  "glMultMatrixf": {
+    "category": "matrix",
+    "files": [
+      "glu.c",
+      "api.c"
+    ]
+  },
+  "glPushMatrix": {
+    "category": "matrix",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glPopMatrix": {
+    "category": "matrix",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glRotatef": {
+    "category": "matrix",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glTranslatef": {
+    "category": "matrix",
+    "files": [
+      "glu.c",
+      "api.c"
+    ]
+  },
+  "glScalef": {
+    "category": "matrix",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glViewport": {
+    "category": "matrix",
+    "files": [
+      "misc.c",
+      "api.c",
+      "vertex.c"
+    ]
+  },
+  "glScissor": {
+    "category": "matrix",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glFrustum": {
+    "category": "matrix",
+    "files": [
+      "glu.c",
+      "api.c"
+    ]
+  },
+  "glOrtho": {
+    "category": "matrix",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glGenLists": {
+    "category": "lists",
+    "files": [
+      "list.c"
+    ]
+  },
+  "glIsList": {
+    "category": "lists",
+    "files": [
+      "list.c"
+    ]
+  },
+  "glNewList": {
+    "category": "lists",
+    "files": [
+      "list.c"
+    ]
+  },
+  "glEndList": {
+    "category": "lists",
+    "files": [
+      "list.c"
+    ]
+  },
+  "glCallList": {
+    "category": "lists",
+    "files": [
+      "list.c",
+      "api.c"
+    ]
+  },
+  "glCallLists": {
+    "category": "lists",
+    "files": [
+      "list.c"
+    ]
+  },
+  "glListBase": {
+    "category": "lists",
+    "files": [
+      "list.c"
+    ]
+  },
+  "glDeleteList": {
+    "category": "lists",
+    "files": [
+      "list.c"
+    ]
+  },
+  "glDeleteLists": {
+    "category": "lists",
+    "files": [
+      "list.c"
+    ]
+  },
+  "glClear": {
+    "category": "clear",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glClearColor": {
+    "category": "clear",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glClearDepth": {
+    "category": "clear",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glClearIndex": {
+    "category": "stubs for unimplemented 1.1 features",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glClearStencil": {
+    "category": "stubs for unimplemented 1.1 features",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glClearAccum": {
+    "category": "stubs for unimplemented 1.1 features",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glAccum": {
+    "category": "stubs for unimplemented 1.1 features",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glAlphaFunc": {
+    "category": "stubs for unimplemented 1.1 features",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glStencilFunc": {
+    "category": "stubs for unimplemented 1.1 features",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glStencilOp": {
+    "category": "stubs for unimplemented 1.1 features",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glStencilMask": {
+    "category": "stubs for unimplemented 1.1 features",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glFeedbackBuffer": {
+    "category": "Feedback",
+    "files": [
+      "select.c"
+    ]
+  },
+  "glPassThrough": {
+    "category": "Feedback",
+    "files": [
+      "select.c"
+    ]
+  },
+  "glRenderMode": {
+    "category": "selection",
+    "files": [
+      "select.c"
+    ]
+  },
+  "glSelectBuffer": {
+    "category": "selection",
+    "files": [
+      "select.c"
+    ]
+  },
+  "glInitNames": {
+    "category": "selection",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glPushName": {
+    "category": "selection",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glPopName": {
+    "category": "selection",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glLoadName": {
+    "category": "selection",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glGenTextures": {
+    "category": "textures",
+    "files": [
+      "texture.c"
+    ]
+  },
+  "glDeleteTextures": {
+    "category": "textures",
+    "files": [
+      "texture.c"
+    ]
+  },
+  "glBindTexture": {
+    "category": "textures",
+    "files": [
+      "texture.c",
+      "api.c"
+    ]
+  },
+  "glTexImage2D": {
+    "category": "textures",
+    "files": [
+      "texture.c",
+      "api.c"
+    ]
+  },
+  "glTexImage1D": {
+    "category": "textures",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glCopyTexImage2D": {
+    "category": "textures",
+    "files": [
+      "texture.c"
+    ]
+  },
+  "glTexEnvi": {
+    "category": "textures",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glTexParameteri": {
+    "category": "textures",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glDrawRangeElements": {
+    "category": "OpenGL 1.2 functions",
+    "files": []
+  },
+  "glTexImage3D": {
+    "category": "OpenGL 1.2 functions",
+    "files": []
+  },
+  "glTexSubImage3D": {
+    "category": "OpenGL 1.2 functions",
+    "files": []
+  },
+  "glCopyTexSubImage3D": {
+    "category": "OpenGL 1.2 functions",
+    "files": []
+  },
+  "glBlendColor": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glBlendEquation": {
+    "category": "opengl 1.2 polygon offset",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glColorTable": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glColorSubTable": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glCopyColorTable": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glCopyColorSubTable": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glColorTableParameteriv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glColorTableParameterfv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetColorTable": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetColorTableParameteriv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetColorTableParameterfv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glHistogram": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glResetHistogram": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetHistogram": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetHistogramParameterfv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetHistogramParameteriv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glMinmax": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glResetMinmax": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetMinmax": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetMinmaxParameterfv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetMinmaxParameteriv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glConvolutionFilter1D": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glConvolutionFilter2D": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glConvolutionParameterf": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glConvolutionParameterfv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glConvolutionParameteri": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glConvolutionParameteriv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glCopyConvolutionFilter1D": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glCopyConvolutionFilter2D": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetConvolutionFilter": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetConvolutionParameterfv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetConvolutionParameteriv": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glSeparableFilter2D": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glGetSeparableFilter": {
+    "category": "GL_ARB_imaging",
+    "files": []
+  },
+  "glActiveTextureARB": {
+    "category": "GL_ARB_multitexture",
+    "files": []
+  },
+  "glClientActiveTextureARB": {
+    "category": "GL_ARB_multitexture",
+    "files": []
+  },
+  "glMultiTexCoord2fARB": {
+    "category": "GL_ARB_multitexture",
+    "files": []
+  },
+  "glMultiTexCoord4fARB": {
+    "category": "GL_ARB_multitexture",
+    "files": []
+  },
+  "glAreTexturesResident": {
+    "category": "GL_ARB_multitexture",
+    "files": [
+      "texture.c"
+    ]
+  },
+  "glIsTexture": {
+    "category": "GL_ARB_multitexture",
+    "files": [
+      "texture.c"
+    ]
+  },
+  "glMaterialfv": {
+    "category": "lighting",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glMaterialf": {
+    "category": "lighting",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glColorMaterial": {
+    "category": "lighting",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glLightfv": {
+    "category": "lighting",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glLightf": {
+    "category": "lighting",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glLightModeli": {
+    "category": "lighting",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glLightModelfv": {
+    "category": "lighting",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glFlush": {
+    "category": "misc",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glFinish": {
+    "category": "misc",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glHint": {
+    "category": "misc",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glGetIntegerv": {
+    "category": "misc",
+    "files": [
+      "get.c"
+    ]
+  },
+  "glGetFloatv": {
+    "category": "misc",
+    "files": [
+      "get.c"
+    ]
+  },
+  "glGetString": {
+    "category": "misc",
+    "files": [
+      "get.c"
+    ]
+  },
+  "glGetError": {
+    "category": "misc",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glFrontFace": {
+    "category": "misc",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glEnableClientState": {
+    "category": "opengl 1.2 arrays",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glDisableClientState": {
+    "category": "opengl 1.2 arrays",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glArrayElement": {
+    "category": "opengl 1.2 arrays",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glVertexPointer": {
+    "category": "opengl 1.2 arrays",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glColorPointer": {
+    "category": "opengl 1.2 arrays",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glNormalPointer": {
+    "category": "opengl 1.2 arrays",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glTexCoordPointer": {
+    "category": "opengl 1.2 arrays",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glGenBuffers": {
+    "category": "opengl 2.0 buffers",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glDeleteBuffers": {
+    "category": "opengl 2.0 buffers",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glBindBuffer": {
+    "category": "opengl 2.0 buffers",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glIsBuffer": {
+    "category": "opengl 2.0 buffers",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glMapBuffer": {
+    "category": "opengl 2.0 buffers",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glBufferData": {
+    "category": "opengl 2.0 buffers",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glBindBufferAsArray": {
+    "category": "opengl 2.0 buffers",
+    "files": [
+      "arrays.c"
+    ]
+  },
+  "glPolygonOffset": {
+    "category": "opengl 1.2 polygon offset",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glBlendFunc": {
+    "category": "opengl 1.2 polygon offset",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glDepthMask": {
+    "category": "not implemented, just added to compile",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glPointSize": {
+    "category": "Point Size",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glRasterPos2f": {
+    "category": "Raster rendering",
+    "files": [
+      "zraster.c"
+    ]
+  },
+  "glRasterPos3f": {
+    "category": "Raster rendering",
+    "files": [
+      "zraster.c"
+    ]
+  },
+  "glRasterPos4f": {
+    "category": "Raster rendering",
+    "files": [
+      "zraster.c"
+    ]
+  },
+  "glRasterPos2fv": {
+    "category": "Raster rendering",
+    "files": [
+      "zraster.c"
+    ]
+  },
+  "glRasterPos3fv": {
+    "category": "Raster rendering",
+    "files": [
+      "zraster.c"
+    ]
+  },
+  "glRasterPos4fv": {
+    "category": "Raster rendering",
+    "files": [
+      "zraster.c"
+    ]
+  },
+  "glDrawPixels": {
+    "category": "Raster rendering",
+    "files": [
+      "zraster.c"
+    ]
+  },
+  "glPixelZoom": {
+    "category": "Raster rendering",
+    "files": [
+      "zraster.c"
+    ]
+  },
+  "glPostProcess": {
+    "category": "PostProcessing pass implementation",
+    "files": [
+      "zpostprocess.c"
+    ]
+  },
+  "glLineWidth": {
+    "category": "not implemented, just added to compile",
+    "files": []
+  },
+  "glDepthFunc": {
+    "category": "not implemented, just added to compile",
+    "files": []
+  },
+  "glTexEnvf": {
+    "category": "not implemented, just added to compile",
+    "files": []
+  },
+  "glVertex2i": {
+    "category": "not implemented, just added to compile",
+    "files": []
+  },
+  "glTexParameterf": {
+    "category": "not implemented, just added to compile",
+    "files": []
+  },
+  "glFogi": {
+    "category": "not implemented, just added to compile",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glFogiv": {
+    "category": "not implemented, just added to compile",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glFogfv": {
+    "category": "not implemented, just added to compile",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glFogf": {
+    "category": "not implemented, just added to compile",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glPolygonStipple": {
+    "category": "not implemented, just added to compile",
+    "files": [
+      "misc.c"
+    ]
+  },
+  "glDebug": {
+    "category": "non compatible functions",
+    "files": [
+      "api.c"
+    ]
+  },
+  "glInit": {
+    "category": "non compatible functions",
+    "files": [
+      "init.c"
+    ]
+  },
+  "glClose": {
+    "category": "non compatible functions",
+    "files": [
+      "init.c"
+    ]
+  }
+}
