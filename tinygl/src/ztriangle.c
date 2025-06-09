@@ -7,7 +7,7 @@
 #include <threads.h>
 
 #if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
-#include "../include-demo/lockstepthread.h"
+#include "lockstepthread.h"
 #endif
 
 /* simple barycentric rasterizer for 32-bit PixelQuad frame buffer */
