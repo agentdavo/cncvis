@@ -1,5 +1,4 @@
 find_package(SDL QUIET)
-find_package(OpenMP QUIET)
 
 if(SDL_FOUND)
 
@@ -23,9 +22,6 @@ if(SDL_FOUND)
           target_compile_options(tinygl PRIVATE -march=native)
         endif(NOT CMAKE_CROSSCOMPILING)
       endif(NOT MSVC)
-      if(OPENMP_C_FOUND)
-        target_link_libraries(${DEMO_NAME} PRIVATE OpenMP::OpenMP_C)
-      endif(OPENMP_C_FOUND)
     endforeach()
 
     set(TINYGL_RESOURCES

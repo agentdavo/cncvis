@@ -86,7 +86,7 @@ void glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, voi
 #else
 #error "Bad TGL_FEATURE_RENDER_BITS"
 #endif
-	if (format != GL_RGB) {
+	if (format != GL_RGB && format != GL_RGBA) {
 		tgl_warning("\nERROR: Incorrect format for glDrawPixels.");
 		return;
 	}

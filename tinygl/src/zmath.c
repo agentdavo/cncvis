@@ -213,8 +213,8 @@ void gl_M4_Rotate(M4* a, GLfloat t, GLint u) {
 		v = 0;
 	if ((w = v + 1) > 2)
 		w = 0;
-	s = sin(t);
-	c = cos(t);
+	s = sinf(t);
+	c = cosf(t);
 	gl_M4_Id(a);
 	a->m[v][v] = c;
 	a->m[v][w] = -s;
@@ -245,11 +245,11 @@ void gl_M3_Inv(M3* a, M3* m) {
 
 /*
 int gl_V3_Norm(V3* a) {
-	GLfloat n;
-	n = sqrt(a->X * a->X + a->Y * a->Y + a->Z * a->Z);
-	if (n == 0)
-		return 1;
-	a->X /= n;
+		GLfloat n;
+		n = sqrtf(a->X * a->X + a->Y * a->Y + a->Z * a->Z);
+		if (n == 0)
+				return 1;
+		a->X /= n;
 	a->Y /= n;
 	a->Z /= n;
 	return 0;
