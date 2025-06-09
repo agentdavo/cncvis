@@ -1,9 +1,14 @@
-//Maintainer's note: This file is not maintained, it remains in the repository as a historical artifact.
-
+// Maintainer's note: This file is not maintained, it remains in the repository
+// as a historical artifact.
 
 Here are listed the functions that TinyGL understands with the known
 limitations. The non mentionned functions are *not* implemented and
 must not be used.
+
+- Only 16-bit or 32-bit color buffers are supported. In 32-bit mode pixels are
+  grouped into 16-byte `PixelQuad` blocks for efficient DMA and SIMD transfers.
+- There is no alpha or stencil buffer; tests only modify state.
+- Textures are resized to a fixed power-of-two size.
 
 
 ************ glEnable / glDisable
@@ -116,10 +121,28 @@ asked.
 The other prototypes are not implemented. Only the follwing mode are
 implemented:
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+************ glTexImage1D
+
+- Supported but the image is resized to 2D using the fixed texture size.
+- Only GL_RGB with unsigned bytes is accepted.
+
+************ glDrawArrays
+
+- Implemented for vertex arrays without element indexing.
+
+************ glDrawPixels / glPixelZoom
+
+- Images must match the target color depth (16 or 32 bpp).
+- No pixel zoom filtering is applied.
+
+************ glRasterPos / glRectf
+
+- Basic versions implemented for setting the raster origin and drawing rectangles.
 
 ************ glPixelStorei
 
@@ -205,4 +228,3 @@ Ignored.
 
 
 See README.BEOS for BeOS limitations.
-

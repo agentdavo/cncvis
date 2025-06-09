@@ -1,4 +1,4 @@
-# TinyGL
+#TinyGL
 
 ![tgl logo](tgl_minimal.png)
 A major overhaul of Fabrice Bellard's TinyGL to be
@@ -50,13 +50,17 @@ These are the C standard library includes used in the RAW DEMOS.
 
 ```c
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 ```
 If your system supports it, the library can also take advantage of `alignas` to get improved SIMD support,
 which can be disabled in zfeatures. This adds a dependency to `stdalign.h` but greatly increases vertex processing speed.
+
+When compiled for 32-bit color the frame buffer packs four ARGB8888 pixels into
+a 16-byte `PixelQuad`. This layout lines up with LVGL's preferred DMA block size
+and lets the compiler emit efficient SIMD loads and stores.
 
 (This is disabled by default for maximum portability)
 
@@ -255,24 +259,25 @@ in the src/ directory.
 You can compile the code yourself without makefiles using these directives:
 
 ```sh
-# inside the src directory
+#inside the src directory
 gcc -O3 -c *.c 
 ar rcs libTinyGL.a *.o
-# the library is now compiled
+#the library is now compiled
 cp libTinyGL.a ../lib
 cd ..
 cd SDL_Examples/
-# build the menu demo
+#build the menu demo
 gcc -O3 menu.c -o menu -lSDL ../lib/libTinyGL.a -lm
-# gears
+#gears
 gcc -O3 gears.c -o gears -lSDL ../lib/libTinyGL.a -lm
 ```
 
 This is how you use TinyGL in a program:
 
 ```c
-//First you have to include
-//(Note that you must either link against libTinyGL.a or compile it in the same compilation unit as your program)
+// First you have to include
+//(Note that you must either link against libTinyGL.a or compile it in the same
+// compilation unit as your program)
 #include "../include/GL/gl.h"
 #include "../include/zbuffer.h"
 
@@ -329,33 +334,30 @@ There is no FILE* usage, or I/O outside of 'msghandling.c' so if you want to rem
 
 ### Multithreading support
 
-OpenMP is used on supported platforms to multithread certain operations.
-
-(OpenMP is also used in the math library (zmath.h and zmath.c) to explicitly force certain operations
-to be SIMD accelerated, so it is recommended that you compile the library with OpenMP support!)
+TinyGL uses a small lock-step worker thread to speed up a few heavy operations.
+No OpenMP runtime is required.
 
 
 These are the operations that are accelerated by multithreading:
 
-* glDrawPixels
-
-Every scanline is drawn by a separate thread.
-
-* glPostProcess
-
-Every call of the function pointer is run by a separate thread.
-
 * glCopyTexImage2D
 
-Every scan line is copied by a separate thread.
+  Texture data is copied half by the main thread and half by the worker thread.
 
-* ZBCopyBuffer
+* glTexImage2D
 
-Every scan line is copied by a separate thread.
+  Image data conversion is split between the two threads.
 
-Compile the library with -fopenmp to see them in action (default). They are used in the texture demo, make sure to add the argument `-pp`
+* glDrawPixels and glPostProcess
 
-You do not need a multithreaded processor to use TinyGL!
+  Each call runs cooperatively with the worker thread when enabled.
+
+* ZB_copyBuffer
+
+  The frame buffer copy helper mirrors work across both threads.
+
+You do not need a multicore processor to use TinyGL—the worker thread simply
+helps overlap memory operations.
 
 ### Performance Recommendations
 
@@ -462,8 +464,8 @@ The compiletime test is now disabled by default since it may not be "liked" by s
 you can enable it in GL/gl.h
 
 ```c
-//at the top of include/GL/gl.h
-//Enable TinyGL's Compiletime Compatibility Test (Scroll down)
+// at the top of include/GL/gl.h
+// Enable TinyGL's Compiletime Compatibility Test (Scroll down)
 #define COMPILETIME_TINYGL_COMPAT_TEST 1
 ```
 
@@ -500,19 +502,57 @@ but adjusting it is easy, see the SDL examples under SDL_EXAMPLES (They require 
 
 The library is sometimes by default configured for RGBA or 5R6G5B, check include/zfeatures.h and change the values in this table:
 ```c
-#define TGL_FEATURE_8_BITS         0
-#define TGL_FEATURE_24_BITS        0
-//These are the only maintained modes.
-#define TGL_FEATURE_16_BITS        1
-#define TGL_FEATURE_32_BITS        0
+#define TGL_FEATURE_8_BITS 0
+#define TGL_FEATURE_24_BITS 0
+// These are the only maintained modes.
+#define TGL_FEATURE_16_BITS 1
+#define TGL_FEATURE_32_BITS 0
 ```
 
 make sure that only ONE of these values is 1.
 
 
-## ALSO COMPATIBLE WITH 16 BIT 
+## ALSO COMPATIBLE WITH 16 BIT
 
-Todo: add updated benchmarks
+### Benchmarks
+
+The following results were measured on an Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz
+using `./Raw_Demos/raw_benchmark 1000`.
+
+| Test | 1000 calls time (ms) | Calls per second |
+| --- | --- | --- |
+| glClear | 7.721 | 129523 |
+| Triangles | 16.983 | 58883 |
+| TriangleStrip | 31.805 | 31442 |
+| TexturedTriangles | 34.367 | 29097 |
+| BlendedTriangles | 38.146 | 26215 |
+| DepthTestedTriangles | 9.689 | 103209 |
+| GouraudFill | 114.318 | 8748 |
+| TexturedFill | 264.611 | 3779 |
+| TexFill_Blend | 679.361 | 1472 |
+| SmallTexFill | 292.590 | 3418 |
+| AlphaTest | 13.708 | 72950 |
+| Scissor | 5.087 | 196588 |
+| PolygonOffset | 104.561 | 9564 |
+| VertexArrays | 17.181 | 58203 |
+| Stencil | 106.207 | 9416 |
+| PointSprites | 14.429 | 69303 |
+| MultiTexSim | 804.847 | 1242 |
+| OverdrawFillrate | 3683.985 | 271 |
+| Lighting | 13.578 | 73651 |
+| Fog | 16.681 | 59949 |
+| LogicOp | 127.921 | 7817 |
+| GridMesh | 481.721 | 2076 |
+| PointCloud | 326.715 | 3061 |
+| glDrawPixels | 0.274 | 3646016 |
+| glCopyTexImage2D | 128.327 | 7793 |
+| glTexImage2D | 76.631 | 13050 |
+| glBindTexture | 0.496 | 2017744 |
+| glBlendFunc | 0.004 | 229410415 |
+| glEnable/Disable | 0.008 | 124084874 |
+| glViewport | 0.009 | 105418511 |
+| Icosahedron | 28.196 | 35466 |
+| DriverOverhead | 16.905 | 59153 |
 
 
 ### OpenIMGUI Standard
@@ -526,7 +566,8 @@ Consider using it!
 
 _______________________________________________________________________________________
 
-# Here is the old description of TinyGL, saved for historical/attribution purposes:
+#Here is the old description of TinyGL,                                        \
+    saved for historical / attribution purposes:
 
 ### I do not endorse or promote its contents, they are here for attribution only.
 

@@ -1,134 +1,125 @@
-
-/* Public Domain / CC0 3d Lock-Step Threading Implementation
-
-
-Written by Gek (DMHSW) in 2020
-
-
-*/
-
+/*
+ * Lock-step threading helper using C11 <threads.h>
+ * Public Domain / CC0
+ */
 #ifndef LOCKSTEPTHREAD_H
 #define LOCKSTEPTHREAD_H
-#include <pthread.h>
-#include <stdlib.h>
+#include <stdbool.h>
+#include <threads.h>
+
 typedef struct {
-	pthread_mutex_t myMutex;
-	pthread_barrier_t myBarrier;
-	pthread_t myThread;
-	int isThreadLive;
-	int shouldKillThread;
-	int state;
-	void (*execute)(void*);
-	void* argument;
-} lsthread;
-void init_lsthread(lsthread* t);
-void start_lsthread(lsthread* t);
-void kill_lsthread(lsthread* t);
-void destroy_lsthread(lsthread* t);
-void lock(lsthread* t);
-void step(lsthread* t);
-void* lsthread_func(void* me_void);
+  mtx_t mutex;
+  struct {
+    mtx_t m;
+    cnd_t c;
+    int count;
+    int waiting;
+  } barrier;
+  thrd_t thread;
+  bool isThreadLive;
+  bool shouldKillThread;
+  int state;
+  void (*execute)(void *);
+  void *argument;
+} c11_lsthread;
+
+void init_c11_lsthread(c11_lsthread *t);
+void start_c11_lsthread(c11_lsthread *t);
+void kill_c11_lsthread(c11_lsthread *t);
+void destroy_c11_lsthread(c11_lsthread *t);
+void lock_c11_lsthread(c11_lsthread *t);
+void step_c11_lsthread(c11_lsthread *t);
+
 #ifdef LOCKSTEPTHREAD_IMPL
-//function declarations
-
-void init_lsthread(lsthread* t){
-	t->myMutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-	pthread_barrier_init(&t->myBarrier, NULL, 2);
-	t->isThreadLive = 0;
-	t->shouldKillThread = 0;
-	t->state = 0;
-	t->execute = NULL;
-	t->argument = NULL;
-}
-void destroy_lsthread(lsthread* t){
-	pthread_mutex_destroy(&t->myMutex);
-	pthread_barrier_destroy(&t->myBarrier);
-}
-void lock(lsthread* t){
-	if(t->state == 1)return;//if already locked, nono
-	if(!t->isThreadLive)return;
-	//exit(1)
-	pthread_barrier_wait(&t->myBarrier);
-	//exit(1)
-	if(pthread_mutex_lock(&t->myMutex))
-		exit(1);
-	t->state = 1;
-	//exit(1)
+static void barrier_wait(c11_lsthread *t) {
+  mtx_lock(&t->barrier.m);
+  t->barrier.waiting++;
+  if (t->barrier.waiting < t->barrier.count) {
+    cnd_wait(&t->barrier.c, &t->barrier.m);
+  } else {
+    t->barrier.waiting = 0;
+    cnd_broadcast(&t->barrier.c);
+  }
+  mtx_unlock(&t->barrier.m);
 }
 
-void step(lsthread* t){
-	if(t->state == -1)return; //if already stepping, nono
-	if(!t->isThreadLive)return;
-	//exit(1)
-	if(pthread_mutex_unlock(&(t->myMutex)))
-		exit(1);
-	//exit(1)
-	pthread_barrier_wait(&t->myBarrier);
-	t->state = -1;
-	//exit(1)
+void init_c11_lsthread(c11_lsthread *t) {
+  mtx_init(&t->mutex, mtx_plain);
+  mtx_init(&t->barrier.m, mtx_plain);
+  cnd_init(&t->barrier.c);
+  t->barrier.count = 2;
+  t->barrier.waiting = 0;
+  t->isThreadLive = false;
+  t->shouldKillThread = false;
+  t->state = 0;
+  t->execute = NULL;
+  t->argument = NULL;
 }
-void kill_lsthread(lsthread* t){
-	if(!t->isThreadLive)return;
-	//exit(1)
-	if(t->state != 1){
-		lock(t);
-		//exit(1)
-	}
-	t->shouldKillThread = 1;
-	
-	step(t);
-	//exit(1)
-	pthread_join(t->myThread,NULL);
-	//if(pthread_kill(t->myThread)){
-	//	exit(1)
-	//}
-	t->isThreadLive = 0;
-	t->shouldKillThread = 0;
+
+void destroy_c11_lsthread(c11_lsthread *t) {
+  mtx_destroy(&t->mutex);
+  mtx_destroy(&t->barrier.m);
+  cnd_destroy(&t->barrier.c);
 }
-void* lsthread_func(void* me_void){
-	lsthread* me = (lsthread*) me_void;
-	int ret = 0;
-	if (!me)pthread_exit(NULL);
-	while (1) {
-		//ret = pthread_cond_wait(&(me->myCond), &(me->myMutex));
-		pthread_barrier_wait(&me->myBarrier);
-		//exit(1)
-		pthread_mutex_lock(&me->myMutex);
-		//exit(1)
-		//if(ret)pthread_exit(NULL);
-		if (!(me->shouldKillThread) && me->execute)
-			me->execute(me->argument);
-		else if(me->shouldKillThread){
-			pthread_mutex_unlock(&me->myMutex);
-			//exit(1)
-			//pthread_barrier_wait(&me->myBarrier);
-			//exit(1)
-			pthread_exit(NULL);
-		}
-		//exit(1)
-		pthread_mutex_unlock(&me->myMutex);
-		//exit(1)
-		pthread_barrier_wait(&me->myBarrier);
-		//exit(1)
-	}
-	pthread_exit(NULL);
+
+void lock_c11_lsthread(c11_lsthread *t) {
+  if (t->state == 1 || !t->isThreadLive)
+    return;
+  barrier_wait(t);
+  if (mtx_lock(&t->mutex))
+    exit(1);
+  t->state = 1;
 }
-void start_lsthread(lsthread* t){
-	if(t->isThreadLive)return;
-	t->isThreadLive = 1;
-	t->shouldKillThread = 0;
-	if(pthread_mutex_lock(&t->myMutex))
-		exit(1);
-	t->state = 1; //LOCKED
-	pthread_create(
-		&t->myThread,
-		NULL,
-		lsthread_func,
-		(void*)t
-	);
+
+void step_c11_lsthread(c11_lsthread *t) {
+  if (t->state == -1 || !t->isThreadLive)
+    return;
+  if (mtx_unlock(&t->mutex))
+    exit(1);
+  barrier_wait(t);
+  t->state = -1;
+}
+
+static int lsthread_func(void *arg) {
+  c11_lsthread *me = arg;
+  if (!me)
+    return 0;
+  for (;;) {
+    barrier_wait(me);
+    mtx_lock(&me->mutex);
+    if (!me->shouldKillThread && me->execute) {
+      me->execute(me->argument);
+    } else if (me->shouldKillThread) {
+      mtx_unlock(&me->mutex);
+      return 0;
+    }
+    mtx_unlock(&me->mutex);
+    barrier_wait(me);
+  }
+  return 0;
+}
+
+void start_c11_lsthread(c11_lsthread *t) {
+  if (t->isThreadLive)
+    return;
+  t->isThreadLive = true;
+  t->shouldKillThread = false;
+  mtx_lock(&t->mutex);
+  t->state = 1; /* locked */
+  thrd_create(&t->thread, lsthread_func, t);
+}
+
+void kill_c11_lsthread(c11_lsthread *t) {
+  if (!t->isThreadLive)
+    return;
+  if (t->state != 1)
+    lock_c11_lsthread(t);
+  t->shouldKillThread = true;
+  step_c11_lsthread(t);
+  thrd_join(t->thread, NULL);
+  t->isThreadLive = false;
+  t->shouldKillThread = false;
 }
 #endif
-//end of implementation
 
 #endif
-//end of header
