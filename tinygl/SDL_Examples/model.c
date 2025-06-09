@@ -1,5 +1,5 @@
 
-//#define PLAY_MUSIC
+// #define PLAY_MUSIC
 
 #include <math.h>
 #include <stdio.h>
@@ -8,9 +8,8 @@
 
 #include "../include/GL/gl.h"
 #define STB_IMAGE_IMPLEMENTATION
+#include "../include-demo/chad_math.h"
 #include "../include-demo/stb_image.h"
-#define CHAD_MATH_IMPL
-#include "../include-demo/3dMath.h"
 #include "../include-demo/tobjparse.h"
 #define CHAD_API_IMPL
 #include "../include/zbuffer.h"
@@ -537,13 +536,13 @@ int main(int argc, char** argv) {
 		mousey = 0;
 		while (SDL_PollEvent(&evt))
 			EVENT_HANDLER(&evt);
-			/*
-					switch(evt.type) {
+		/*
+				switch(evt.type) {
 
 
-					}
-			*/
-			// draw scene:
+				}
+		*/
+		// draw scene:
 #define WIDTH winSizeX
 #define HEIGHT winSizeY
 		glMatrixMode(GL_PROJECTION);

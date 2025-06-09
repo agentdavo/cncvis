@@ -71,7 +71,7 @@ static int gl_V3_Norm_Fast(V3* a) {
 	if (n > 1E+3)
 		return 1;
 #else
-	n = sqrt(a->X * a->X + a->Y * a->Y + a->Z * a->Z);
+	n = sqrtf(a->X * a->X + a->Y * a->Y + a->Z * a->Z);
 	if (n == 0)
 		return 1;
 	n = 1.0 / n;

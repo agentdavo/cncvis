@@ -1,5 +1,6 @@
 #include "../include/GL/gl.h"
 #include "../include/zbuffer.h"
+#include "../src/zgl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -562,6 +563,41 @@ static void bench_icosahedron(int loops) {
   }
 }
 
+static void run_all(int loops) {
+  run_bench("glClear", bench_clear, loops);
+  run_bench("Triangles", bench_triangles, loops);
+  run_bench("TriangleStrip", bench_triangle_strip, loops);
+  run_bench("TexturedTriangles", bench_tex_triangles, loops);
+  run_bench("BlendedTriangles", bench_blended_triangles, loops);
+  run_bench("DepthTestedTriangles", bench_depth_triangles, loops);
+  run_bench("GouraudFill", bench_gouraud_fill, loops);
+  run_bench("TexturedFill", bench_tex_fill, loops);
+  run_bench("TexFill_Blend", bench_tex_fill_blend, loops);
+  run_bench("SmallTexFill", bench_smalltex_fill, loops);
+  run_bench("AlphaTest", bench_alpha_test, loops);
+  run_bench("Scissor", bench_scissor, loops);
+  run_bench("PolygonOffset", bench_polygon_offset, loops);
+  run_bench("VertexArrays", bench_vertex_arrays, loops);
+  run_bench("Stencil", bench_stencil, loops);
+  run_bench("PointSprites", bench_point_sprites, loops);
+  run_bench("MultiTexSim", bench_multitex_sim, loops);
+  run_bench("OverdrawFillrate", bench_fillrate_overdraw, loops);
+  run_bench("Lighting", bench_lighting, loops);
+  run_bench("Fog", bench_fog, loops);
+  run_bench("LogicOp", bench_logic_op, loops);
+  run_bench("GridMesh", bench_grid_mesh, loops);
+  run_bench("PointCloud", bench_point_cloud, loops);
+  run_bench("glDrawPixels", bench_drawpixels, loops);
+  run_bench("glCopyTexImage2D", bench_copytex, loops);
+  run_bench("glTexImage2D", bench_teximage, loops);
+  run_bench("glBindTexture", bench_bindtex, loops);
+  run_bench("glBlendFunc", bench_blendfunc, loops);
+  run_bench("glEnable/Disable", bench_enable, loops);
+  run_bench("glViewport", bench_viewport, loops);
+  run_bench("Icosahedron", bench_icosahedron, loops);
+  run_bench("DriverOverhead", bench_driver_overhead, loops);
+}
+
 int main(int argc, char **argv) {
   int loops = 10000;
   int winX = 256;
@@ -601,38 +637,12 @@ int main(int argc, char **argv) {
   glTexImage2D(GL_TEXTURE_2D, 0, 3, 32, 32, 0, GL_RGB, GL_UNSIGNED_BYTE,
                texbuf_small);
 
-  run_bench("glClear", bench_clear, loops);
-  run_bench("Triangles", bench_triangles, loops);
-  run_bench("TriangleStrip", bench_triangle_strip, loops);
-  run_bench("TexturedTriangles", bench_tex_triangles, loops);
-  run_bench("BlendedTriangles", bench_blended_triangles, loops);
-  run_bench("DepthTestedTriangles", bench_depth_triangles, loops);
-  run_bench("GouraudFill", bench_gouraud_fill, loops);
-  run_bench("TexturedFill", bench_tex_fill, loops);
-  run_bench("TexFill_Blend", bench_tex_fill_blend, loops);
-  run_bench("SmallTexFill", bench_smalltex_fill, loops);
-  run_bench("AlphaTest", bench_alpha_test, loops);
-  run_bench("Scissor", bench_scissor, loops);
-  run_bench("PolygonOffset", bench_polygon_offset, loops);
-  run_bench("VertexArrays", bench_vertex_arrays, loops);
-  run_bench("Stencil", bench_stencil, loops);
-  run_bench("PointSprites", bench_point_sprites, loops);
-  run_bench("MultiTexSim", bench_multitex_sim, loops);
-  run_bench("OverdrawFillrate", bench_fillrate_overdraw, loops);
-  run_bench("Lighting", bench_lighting, loops);
-  run_bench("Fog", bench_fog, loops);
-  run_bench("LogicOp", bench_logic_op, loops);
-  run_bench("GridMesh", bench_grid_mesh, loops);
-  run_bench("PointCloud", bench_point_cloud, loops);
-  run_bench("glDrawPixels", bench_drawpixels, loops);
-  run_bench("glCopyTexImage2D", bench_copytex, loops);
-  run_bench("glTexImage2D", bench_teximage, loops);
-  run_bench("glBindTexture", bench_bindtex, loops);
-  run_bench("glBlendFunc", bench_blendfunc, loops);
-  run_bench("glEnable/Disable", bench_enable, loops);
-  run_bench("glViewport", bench_viewport, loops);
-  run_bench("Icosahedron", bench_icosahedron, loops);
-  run_bench("DriverOverhead", bench_driver_overhead, loops);
+  printf("\n== Non-threaded ==\n");
+  tgl_threads_enabled = 0;
+  run_all(loops);
+  printf("\n== Threaded ==\n");
+  tgl_threads_enabled = 1;
+  run_all(loops);
 
   free(pixel_buf);
   glDeleteTextures(1, &tex);

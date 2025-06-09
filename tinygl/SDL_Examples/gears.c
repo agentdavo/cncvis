@@ -3,7 +3,7 @@
  * 3-D gear wheels by Brian Paul. This program is in the public domain.
  */
 
-//#define PLAY_MUSIC
+// #define PLAY_MUSIC
 
 #include <math.h>
 #include <stdio.h>
@@ -14,8 +14,7 @@
 
 #include "../include/zbuffer.h"
 #define CHAD_API_IMPL
-#define CHAD_MATH_IMPL
-#include "../include-demo/3dMath.h"
+#include "../include-demo/chad_math.h"
 #ifdef PLAY_MUSIC
 #include "../include-demo/api_audio.h"
 #else
@@ -235,11 +234,14 @@ void initScene() {
 	glLightfv(GL_LIGHT0, GL_SPECULAR, white);
 	glEnable(GL_CULL_FACE);
 
-	if(lighting)glEnable(GL_LIGHT0);
+	if (lighting)
+		glEnable(GL_LIGHT0);
 	// glEnable(GL_DEPTH_TEST);
 
-	if(stipple)	glEnable(GL_POLYGON_STIPPLE);
-	else glDisable(GL_POLYGON_STIPPLE);
+	if (stipple)
+		glEnable(GL_POLYGON_STIPPLE);
+	else
+		glDisable(GL_POLYGON_STIPPLE);
 	glPolygonStipple(stipplepattern);
 	glPointSize(10.0f);
 	glTextSize(GL_TEXT_SIZE24x24);
@@ -292,14 +294,14 @@ int main(int argc, char** argv) {
 				fps = strtoull(argv[i], 0, 10);
 			if (!strcmp(argv[i], "-flat"))
 				flat = 1;
-			if(!strcmp(argv[i], "-nostipple"))
-				stipple=0;
-			if(!strcmp(argv[i], "-stipple"))
-				stipple=1;
-			if(!strcmp(argv[i], "-lighting"))
-				lighting=1;
-			if(!strcmp(argv[i], "-nolighting"))
-				lighting=0;
+			if (!strcmp(argv[i], "-nostipple"))
+				stipple = 0;
+			if (!strcmp(argv[i], "-stipple"))
+				stipple = 1;
+			if (!strcmp(argv[i], "-lighting"))
+				lighting = 1;
+			if (!strcmp(argv[i], "-nolighting"))
+				lighting = 0;
 			if (!strcmp(argv[i], "-smooth"))
 				flat = 0;
 			if (!strcmp(argv[i], "-blend"))
@@ -429,10 +431,10 @@ int main(int argc, char** argv) {
 	// glDisable(GL_DEPTH_TEST);
 
 	// glDisable( GL_LIGHTING );
-	if(lighting)
+	if (lighting)
 		glEnable(GL_LIGHTING);
 	else
-		glDisable( GL_LIGHTING );	
+		glDisable(GL_LIGHTING);
 	// glBlendFunc(GL_ONE_MINUS_SRC_COLOR, GL_ZERO);
 	glBlendEquation(GL_FUNC_ADD);
 	if (blending) {
@@ -523,7 +525,7 @@ int main(int argc, char** argv) {
 				fprintf(stderr, "SDL ERROR: Can't lock screen: %s\n", SDL_GetError());
 				return 1;
 			}
-			// Quickly convert all pixels to the correct format
+		// Quickly convert all pixels to the correct format
 #if TGL_FEATURE_RENDER_BITS == 32
 		// for testing!
 		if (needsRGBAFix)
