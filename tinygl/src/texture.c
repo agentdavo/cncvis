@@ -2,7 +2,63 @@
  * Texture Manager
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "zgl.h"
+#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
+#include "../include-demo/lockstepthread.h"
+#endif
+
+#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
+typedef void (*RowFunc)(const void*, void*, GLint);
+typedef struct {
+	const void* src;
+	void* dst;
+	GLint src_stride;
+	GLint dst_stride;
+	GLint width;
+	GLint lines;
+	RowFunc fn;
+} TexJob;
+static lsthread tex_thread;
+static TexJob tex_job;
+#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
+static void row_copy_pixels(const void* src, void* dst, GLint w) { memcpy(dst, src, (size_t)w * sizeof(PIXEL)); }
+#if TGL_FEATURE_RENDER_BITS == 32
+static void row_convert_rgb(const void* src, void* dst, GLint w) {
+	const GLubyte* s = (const GLubyte*)src;
+	PIXEL* d = (PIXEL*)dst;
+	for (GLint i = 0; i < w; ++i) {
+		d[i] = ((PIXEL)s[0] << 16) | ((PIXEL)s[1] << 8) | (PIXEL)s[2];
+		s += 3;
+	}
+}
+#elif TGL_FEATURE_RENDER_BITS == 16
+static void row_convert_rgb(const void* src, void* dst, GLint w) {
+	const GLubyte* s = (const GLubyte*)src;
+	GLushort* d = (GLushort*)dst;
+	for (GLint i = 0; i < w; ++i) {
+		d[i] = (GLushort)(((s[0] & 0xF8) << 8) | ((s[1] & 0xFC) << 3) | ((s[2] & 0xF8) >> 3));
+		s += 3;
+	}
+}
+#endif
+
+static void tex_job_func(void* arg) {
+	TexJob* job = (TexJob*)arg;
+	for (GLint y = 0; y < job->lines; ++y) {
+		const void* s = (const GLbyte*)job->src + y * job->src_stride;
+		void* d = (GLbyte*)job->dst + y * job->dst_stride;
+		job->fn(s, d, job->width);
+	}
+}
+#endif
+#endif
 
 static GLTexture* find_texture(GLint h) {
 	GLTexture* t;
@@ -113,6 +169,19 @@ void glInitTextures() {
 	GLContext* c = gl_get_context();
 	c->texture_2d_enabled = 0;
 	c->current_texture = find_texture(0);
+#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
+	init_lsthread(&tex_thread);
+	tex_thread.execute = tex_job_func;
+	tex_thread.argument = &tex_job;
+	start_lsthread(&tex_thread);
+#endif
+}
+
+void glEndTextures() {
+#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
+	kill_lsthread(&tex_thread);
+	destroy_lsthread(&tex_thread);
+#endif
 }
 
 void glGenTextures(GLint n, GLuint* textures) {
@@ -226,8 +295,25 @@ void glopCopyTexImage2D(GLParam* p) {
 	/* Simple memcpy when the region lies within the framebuffer */
 	if (x >= 0 && y >= 0 && x + w <= c->zb->xsize && y + h <= c->zb->ysize) {
 		PIXEL* src = c->zb->pbuf + y * c->zb->xsize + x;
-		for (j = 0; j < h; ++j) {
-			memcpy(data + j * w, src + j * c->zb->xsize, w * sizeof(PIXEL));
+#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
+		if (tgl_threads_enabled) {
+			GLint half = h / 2;
+			tex_job.src = src + half * c->zb->xsize;
+			tex_job.dst = data + half * w;
+			tex_job.src_stride = c->zb->xsize * sizeof(PIXEL);
+			tex_job.dst_stride = w * sizeof(PIXEL);
+			tex_job.width = w;
+			tex_job.lines = h - half;
+			tex_job.fn = row_copy_pixels;
+			step(&tex_thread);
+			for (j = 0; j < half; ++j)
+				memcpy(data + j * w, src + j * c->zb->xsize, w * sizeof(PIXEL));
+			lock(&tex_thread);
+		} else
+#endif
+		{
+			for (j = 0; j < h; ++j)
+				memcpy(data + j * w, src + j * c->zb->xsize, w * sizeof(PIXEL));
 		}
 	} else {
 		for (j = 0; j < h; ++j) {
@@ -358,13 +444,31 @@ void glopTexImage2D(GLParam* p) {
 	im = &c->current_texture->images[level];
 	im->xsize = width;
 	im->ysize = height;
+#if TGL_FEATURE_MULTITHREADED_COPY_TEXIMAGE_2D == 1
+	if (tgl_threads_enabled) {
+		GLint half = height / 2;
+		tex_job.src = pixels1 + half * width * 3;
+		tex_job.dst = im->pixmap + half * width;
+		tex_job.src_stride = width * 3;
+		tex_job.dst_stride = width * sizeof(PIXEL);
+		tex_job.width = width;
+		tex_job.lines = height - half;
+		tex_job.fn = row_convert_rgb;
+		step(&tex_thread);
+		for (GLint y = 0; y < half; ++y)
+			row_convert_rgb(pixels1 + y * width * 3, im->pixmap + y * width, width);
+		lock(&tex_thread);
+	} else
+#endif
+	{
 #if TGL_FEATURE_RENDER_BITS == 32
-	gl_convertRGB_to_8A8R8G8B(im->pixmap, pixels1, width, height);
+		gl_convertRGB_to_8A8R8G8B(im->pixmap, pixels1, width, height);
 #elif TGL_FEATURE_RENDER_BITS == 16
-	gl_convertRGB_to_5R6G5B(im->pixmap, pixels1, width, height);
+		gl_convertRGB_to_5R6G5B(im->pixmap, pixels1, width, height);
 #else
 #error Bad TGL_FEATURE_RENDER_BITS
 #endif
+	}
 	if (do_free)
 		gl_free(pixels1);
 }
