@@ -28,6 +28,7 @@ TinyGL contains the following safety features:
 2. OpenGL 2.0 buffers, for easy memory management (Anything you put in a buffer using glBufferData will be free'd upon glClose())
 
 3. Fully leak checked using Valgrind- The only leaks you'll see are from your system's SDL. the Raw demos have zero leaks.
+4. Avoids many common OpenGL pitfalls. See `PITFALLS.md` for details.
 
 ## Incredibly portable
 

@@ -322,6 +322,9 @@ void glInit(void* zbuffer1) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	/* Avoid lighting artifacts with scaled models */
+	glEnable(GL_NORMALIZE);
+
 	c->matrix_model_projection_updated = 1;
 
 	/* opengl 1.1 arrays */
