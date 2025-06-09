@@ -1,10 +1,9 @@
-When modifying code in this tinygl folder:
+When working in this tinygl directory:
 
-1. Format all `.c` and `.h` files using `clang-format -i` before committing.
-2. Ensure the project still builds using CMake:
+1. Follow the refactoring progress documented in ../../REFACTOR.md. Keep that file updated when you make changes related to the 18‑step plan.
+2. Run clang-format -i on any modified .c or .h files.
+3. Verify the library still builds with CMake:
    ```bash
-   cmake -S . -B build
+   cmake -S .. -B build
    cmake --build build
-   ./build/tinygl/Raw_Demos/raw_benchmark 10
    ```
-3. Update README.md in this folder if the public API or build steps change

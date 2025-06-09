@@ -1,3 +1,4 @@
+#include "gl_selection.h"
 #include "zgl.h"
 
 GLint glRenderMode(GLint mode) {
@@ -123,6 +124,36 @@ void glFeedbackBuffer(GLint size, GLenum type, GLfloat* buf) {
 #else
 	return;
 #endif
+}
+
+void glInitNames(void) {
+	GLParam p[1];
+#include "error_check_no_context.h"
+	p[0].op = OP_InitNames;
+	gl_add_op(p);
+}
+
+void glPushName(GLuint name) {
+	GLParam p[2];
+#include "error_check_no_context.h"
+	p[0].op = OP_PushName;
+	p[1].i = name;
+	gl_add_op(p);
+}
+
+void glPopName(void) {
+	GLParam p[1];
+#include "error_check_no_context.h"
+	p[0].op = OP_PopName;
+	gl_add_op(p);
+}
+
+void glLoadName(GLuint name) {
+	GLParam p[2];
+#include "error_check_no_context.h"
+	p[0].op = OP_LoadName;
+	p[1].i = name;
+	gl_add_op(p);
 }
 
 void gl_add_feedback(GLfloat token, GLVertex* v1, GLVertex* v2, GLVertex* v3, GLfloat passthrough_token_value) {

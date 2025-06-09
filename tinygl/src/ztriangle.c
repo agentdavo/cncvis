@@ -1,14 +1,12 @@
 #include "../include/zbuffer.h"
-#include "msghandling.h"
+#include "gl_utils.h"
 #include "zgl.h"
 #include <math.h>
 #include <stdalign.h>
 #include <stdbool.h>
 #include <threads.h>
 
-#if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
 #include "lockstepthread.h"
-#endif
 
 /* simple barycentric rasterizer for 32-bit PixelQuad frame buffer */
 
@@ -23,13 +21,11 @@ typedef struct {
 	PIXEL flat_color;
 } RasterJob;
 
-#if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
 #ifndef NUM_RASTER_THREADS
 #define NUM_RASTER_THREADS 4
 #endif
 static c11_lsthread raster_threads[NUM_RASTER_THREADS];
 static RasterJob raster_jobs[NUM_RASTER_THREADS];
-#endif
 
 static inline float edgef(float ax, float ay, float bx, float by, float cx, float cy) { return (cx - ax) * (by - ay) - (cy - ay) * (bx - ax); }
 
@@ -114,7 +110,6 @@ static void raster_job(void* arg) {
 	}
 }
 
-#if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
 static void start_raster_jobs(RasterJob base) {
 	int h = (base.zb->ysize + NUM_RASTER_THREADS - 1) / NUM_RASTER_THREADS;
 	for (int i = 0; i < NUM_RASTER_THREADS; i++) {
@@ -126,7 +121,6 @@ static void start_raster_jobs(RasterJob base) {
 	for (int i = 0; i < NUM_RASTER_THREADS; i++)
 		lock_c11_lsthread(&raster_threads[i]);
 }
-
 void init_raster_threads(void) {
 	for (int i = 0; i < NUM_RASTER_THREADS; i++) {
 		init_c11_lsthread(&raster_threads[i]);
@@ -135,25 +129,21 @@ void init_raster_threads(void) {
 		start_c11_lsthread(&raster_threads[i]);
 	}
 }
-
 void end_raster_threads(void) {
 	for (int i = 0; i < NUM_RASTER_THREADS; i++) {
 		kill_c11_lsthread(&raster_threads[i]);
 		destroy_c11_lsthread(&raster_threads[i]);
 	}
 }
-#endif
 
 void ZB_setTexture(ZBuffer* zb, PIXEL* texture) { zb->current_texture = texture; }
 
 static void draw_triangle(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1, ZBufferPoint* p2, int mode, PIXEL flat) {
-#if TGL_FEATURE_MULTITHREADED_ZB_TRIANGLE == 1
 	if (tgl_threads_enabled && zb->ysize > 64) {
 		RasterJob base = {zb, p0, p1, p2, 0, zb->ysize, mode, flat};
 		start_raster_jobs(base);
 		return;
 	}
-#endif
 	RasterJob job = {zb, p0, p1, p2, 0, zb->ysize, mode, flat};
 	raster_job(&job);
 }

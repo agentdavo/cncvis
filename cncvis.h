@@ -22,9 +22,8 @@
 #include "tinygl/include/GL/gl.h"
 #include "tinygl/include/GL/glu.h"
 #include "tinygl/include/zbuffer.h"
-#define CHAD_API_IMPL
-#include "chad_math.h"
 #include "tinygl/src/font8x8_basic.h"
+#include "tinygl/src/zmath.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265

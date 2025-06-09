@@ -1,5 +1,5 @@
 
-#include "chad_math.h"
+#include "../src/zmath.h"
 
 #include "../include/GL/gl.h"
 #include "../include/zbuffer.h"

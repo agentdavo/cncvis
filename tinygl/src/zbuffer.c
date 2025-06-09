@@ -1,20 +1,19 @@
-/*
- * Z buffer: 16 bits Z / 32 bits color (ARGB8888)
- * Pixel data grouped in 16-byte PixelQuad blocks for LVGL DMA
+/**
+ * @file zbuffer.c
+ * @brief Framebuffer and depth buffer management for TinyGL.
+ * Z buffer: 16 bits Z / 32 bits color (ARGB8888). Pixel data grouped
+ * in 16-byte PixelQuad blocks for LVGL DMA.
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "../include/zbuffer.h"
-#include "msghandling.h"
-#include "zgl.h"
-#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
-#define LOCKSTEPTHREAD_IMPL
+#include "gl_utils.h"
+#include "internal.h"
 #include "lockstepthread.h"
-#endif
+#include "zgl.h"
 
-#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
 static c11_lsthread copy_thread;
 typedef struct {
 	PIXEL* src;
@@ -31,7 +30,6 @@ static void copy_job_func(void* arg) {
 		memcpy((GLbyte*)job->dst + y * job->stride, job->src + y * job->width, (size_t)job->width * sizeof(PIXEL));
 	}
 }
-#endif
 ZBuffer* ZB_open(GLint xsize, GLint ysize, GLint mode,
 
 				 void* frame_buffer) {
@@ -80,12 +78,10 @@ ZBuffer* ZB_open(GLint xsize, GLint ysize, GLint mode,
 	}
 
 	zb->current_texture = NULL;
-#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
 	init_c11_lsthread(&copy_thread);
 	copy_thread.execute = copy_job_func;
 	copy_thread.argument = &copy_job;
 	start_c11_lsthread(&copy_thread);
-#endif
 
 	return zb;
 error:
@@ -98,10 +94,8 @@ void ZB_close(ZBuffer* zb) {
 	if (zb->frame_buffer_allocated)
 		gl_free(zb->pbuf);
 
-#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
 	kill_c11_lsthread(&copy_thread);
 	destroy_c11_lsthread(&copy_thread);
-#endif
 
 	gl_free(zb->zbuf);
 	gl_free(zb);
@@ -171,7 +165,6 @@ static inline void copy_rows(PIXEL* restrict src, PIXEL* restrict dst, GLint lin
 
 static void ZB_copyBuffer(ZBuffer* restrict zb, void* restrict buf, GLint linesize) {
 	GLint half = zb->ysize;
-#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
 	if (tgl_threads_enabled) {
 		half = zb->ysize / 2;
 		copy_job.src = zb->pbuf + half * zb->xsize;
@@ -181,12 +174,9 @@ static void ZB_copyBuffer(ZBuffer* restrict zb, void* restrict buf, GLint linesi
 		copy_job.lines = zb->ysize - half;
 		step_c11_lsthread(&copy_thread);
 	}
-#endif
 	copy_rows(zb->pbuf, buf, half, zb->xsize, linesize);
-#if TGL_FEATURE_MULTITHREADED_ZB_COPYBUFFER == 1
 	if (tgl_threads_enabled)
 		lock_c11_lsthread(&copy_thread);
-#endif
 }
 
 #if TGL_FEATURE_RENDER_BITS == 16

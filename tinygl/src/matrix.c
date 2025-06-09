@@ -1,5 +1,11 @@
-#include "msghandling.h"
+#include "gl_utils.h"
+#include "internal.h"
 #include "zgl.h"
+
+/**
+ * @file matrix.c
+ * @brief Matrix stack operations and transformations.
+ */
 void gl_print_matrix(const GLfloat* m) {
 	GLint i;
 
