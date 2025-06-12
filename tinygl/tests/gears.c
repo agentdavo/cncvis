@@ -39,6 +39,7 @@ if I didn't define STBIW_ASSERT
 #define STBIW_ASSERT(x) /* a comment */
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../include-demo/stb_image_write.h"
+#include "../include/ktx_loader.h"
 #include "../src/gl_utils.h"
 
 typedef unsigned char uchar;
@@ -47,6 +48,8 @@ typedef unsigned char uchar;
 #define M_PI 3.14159265
 #endif
 int override_drawmodes = 0;
+static int use_texture = 0;
+static GLuint tex_red = 0;
 GLubyte stipplepattern[128] = {
     0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA,
     0xAA, 0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55,
@@ -99,10 +102,26 @@ static void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
   }
   for (i = 0; i <= teeth; i++) {
     angle = i * 2.0 * M_PI / teeth;
-    glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5);
-    glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5);
-    glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5);
-    glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), width * 0.5);
+    GLfloat x = r0 * cos(angle);
+    GLfloat y = r0 * sin(angle);
+    if (use_texture)
+      glTexCoord2f(0.5f + x / (2 * r2), 0.5f + y / (2 * r2));
+    glVertex3f(x, y, width * 0.5);
+    x = r1 * cos(angle);
+    y = r1 * sin(angle);
+    if (use_texture)
+      glTexCoord2f(0.5f + x / (2 * r2), 0.5f + y / (2 * r2));
+    glVertex3f(x, y, width * 0.5);
+    x = r0 * cos(angle);
+    y = r0 * sin(angle);
+    if (use_texture)
+      glTexCoord2f(0.5f + x / (2 * r2), 0.5f + y / (2 * r2));
+    glVertex3f(x, y, width * 0.5);
+    x = r1 * cos(angle + 3 * da);
+    y = r1 * sin(angle + 3 * da);
+    if (use_texture)
+      glTexCoord2f(0.5f + x / (2 * r2), 0.5f + y / (2 * r2));
+    glVertex3f(x, y, width * 0.5);
   }
   glEnd();
 
@@ -117,10 +136,26 @@ static void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
   for (i = 0; i < teeth; i++) {
     angle = i * 2.0 * M_PI / teeth;
 
-    glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5);
-    glVertex3f(r2 * cos(angle + da), r2 * sin(angle + da), width * 0.5);
-    glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da), width * 0.5);
-    glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), width * 0.5);
+    GLfloat x = r1 * cos(angle);
+    GLfloat y = r1 * sin(angle);
+    if (use_texture)
+      glTexCoord2f(0.5f + x / (2 * r2), 0.5f + y / (2 * r2));
+    glVertex3f(x, y, width * 0.5);
+    x = r2 * cos(angle + da);
+    y = r2 * sin(angle + da);
+    if (use_texture)
+      glTexCoord2f(0.5f + x / (2 * r2), 0.5f + y / (2 * r2));
+    glVertex3f(x, y, width * 0.5);
+    x = r2 * cos(angle + 2 * da);
+    y = r2 * sin(angle + 2 * da);
+    if (use_texture)
+      glTexCoord2f(0.5f + x / (2 * r2), 0.5f + y / (2 * r2));
+    glVertex3f(x, y, width * 0.5);
+    x = r1 * cos(angle + 3 * da);
+    y = r1 * sin(angle + 3 * da);
+    if (use_texture)
+      glTexCoord2f(0.5f + x / (2 * r2), 0.5f + y / (2 * r2));
+    glVertex3f(x, y, width * 0.5);
   }
   glEnd();
 
@@ -274,6 +309,28 @@ void initScene() {
   glPolygonStipple(stipplepattern);
   glPointSize(10.0f);
   glTextSize(GL_TEXT_SIZE24x24);
+  size_t hex_size = 0;
+  unsigned char *hex_data = NULL;
+  FILE *hf = fopen("red.ktx", "r");
+  if (hf) {
+    unsigned int byte;
+    size_t cap = 128;
+    hex_data = malloc(cap);
+    while (fscanf(hf, "%2x", &byte) == 1) {
+      if (hex_size >= cap) {
+        cap *= 2;
+        hex_data = realloc(hex_data, cap);
+      }
+      hex_data[hex_size++] = (unsigned char)byte;
+    }
+    fclose(hf);
+    FILE *tmp = fopen("red_tmp.ktx", "wb");
+    fwrite(hex_data, 1, hex_size, tmp);
+    fclose(tmp);
+    load_ktx_texture("red_tmp.ktx", &tex_red);
+    remove("red_tmp.ktx");
+    free(hex_data);
+  }
   /* make the gears */
   gear1 = glGenLists(1);
   glNewList(gear1, GL_COMPILE);
@@ -289,8 +346,17 @@ void initScene() {
   glMaterialfv(GL_FRONT, GL_DIFFUSE, red);
   glMaterialfv(GL_FRONT, GL_SPECULAR, white);
   glColor3fv(red);
+  if (tex_red) {
+    glBindTexture(GL_TEXTURE_2D, tex_red);
+    glEnable(GL_TEXTURE_2D);
+    use_texture = 1;
+  }
   gear(0.5, 2.0, 2.0, 10,
        0.7); // The small gear with the smaller hole, to the right.
+  if (tex_red) {
+    use_texture = 0;
+    glDisable(GL_TEXTURE_2D);
+  }
   glEndList();
 
   gear3 = glGenLists(1);
@@ -464,6 +530,8 @@ int main(int argc, char **argv) {
   glDeleteList(gear1);
   glDeleteList(gear2);
   glDeleteList(gear3);
+  if (tex_red)
+    glDeleteTextures(1, &tex_red);
   // ZB_close(frameBuffer);
   glClose();
   glInit(frameBuffer);

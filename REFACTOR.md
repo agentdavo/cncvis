@@ -26,3 +26,4 @@ This document tracks progress of the 18-step refactoring plan. The goal is to sp
 |20|Merge `chad_math.h` into `zmath` for SIMD-friendly math|Completed|
 |21|Add cube benchmark test comparing threading performance|Completed|
 |22|Implement optional KTX texture loader|Completed|
+|23|Add red KTX sample texture used by gears test|Completed|
