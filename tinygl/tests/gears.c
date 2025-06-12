@@ -39,6 +39,7 @@ if I didn't define STBIW_ASSERT
 #define STBIW_ASSERT(x) /* a comment */
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../include-demo/stb_image_write.h"
+#include "../src/gl_utils.h"
 
 typedef unsigned char uchar;
 
@@ -312,6 +313,7 @@ int main(int argc, char **argv) {
   unsigned int setenspec = 1;
   unsigned int dotext = 1;
   unsigned int blending = 0;
+  int do_profiling = 0;
   if (argc > 1) {
     char *larg = "";
     for (int i = 1; i < argc; i++) {
@@ -333,6 +335,8 @@ int main(int argc, char **argv) {
         override_drawmodes = 2;
       if (!strcmp(argv[i], "-notext"))
         dotext = 0;
+      if (!strcmp(argv[i], "--profiling"))
+        do_profiling = 1;
       larg = argv[i];
     }
   }
@@ -352,6 +356,8 @@ int main(int argc, char **argv) {
     exit(1);
   }
   glInit(frameBuffer);
+  if (do_profiling)
+    tgl_enable_profiling(1);
 
   // Print version info
   printf("\nVersion string:\n%s", glGetString(GL_VERSION));
@@ -469,5 +475,7 @@ int main(int argc, char **argv) {
   glInit(frameBuffer);
   ZB_close(frameBuffer);
   glClose();
+  if (do_profiling)
+    tgl_profile_report();
   return 0;
 }

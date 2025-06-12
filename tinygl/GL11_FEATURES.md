@@ -1,4 +1,4 @@
-# TinyGL OpenGL 1.1 Coverage
+#TinyGL OpenGL 1.2 Coverage
 
 The following core features are implemented:
 
@@ -8,6 +8,12 @@ The following core features are implemented:
 - Basic blending, alpha testing and fog controls (glFogf, glFogi, glFogfv,
   glFogiv, glAlphaFunc)
 - Texture objects (`glTexImage`, `glBindTexture`, `glCopyTexImage`)
+- BGR/BGRA pixel formats for textures and readback
+- `glDrawRangeElements` for indexed vertex drawing
+- `glDrawElements` convenience wrapper for indexed drawing
+- `glDepthFunc` selects depth test comparison
+- `glLineWidth` updates line raster width (unused)
+- Stubs for 3D texture entry points
 - Matrix stack and lighting operations
 - Client-side attribute enabling/disabling
 - Basic scissor testing via `glScissor` and `GL_SCISSOR_TEST`
@@ -15,6 +21,14 @@ The following core features are implemented:
 - Textured primitives including per-vertex colors
 - `glDrawArrays` for array-based rendering
 - `glDrawPixels` and `glPixelZoom` for software image blits
+- `glGetIntegerv` and `glGetFloatv` expose basic state
+- `glTexEnvi` and `glTexParameteri` store texture env and filter settings
+- `glTexEnvf`/`glTexParameterf` accept floating point values
+- `glPixelStorei` configures pack and unpack alignment
+- `glReadPixels` retrieves framebuffer contents
+- `glTexSubImage1D`/`glTexSubImage2D` update texture regions
+- `glCopyTexSubImage2D` copies framebuffer data to textures
+- `glIsEnabled` queries current enable state
 - Raster position helpers (`glRasterPos*`) and `glRectf`
 - `glTexImage1D` (internally resized to 2D)
 - `glGetString` returns vendor/renderer/version strings

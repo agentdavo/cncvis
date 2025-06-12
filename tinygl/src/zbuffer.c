@@ -15,6 +15,7 @@
 #include "zgl.h"
 
 static c11_lsthread copy_thread;
+static c11_lsthread clear_thread;
 typedef struct {
 	PIXEL* src;
 	PIXEL* dst;
@@ -23,11 +24,46 @@ typedef struct {
 	GLint lines;
 } CopyJob;
 static CopyJob copy_job;
+typedef struct {
+	PIXEL* dst;
+	GLushort* zbuf;
+	GLint width;
+	GLint stride;
+	GLint lines;
+	GLint clear_z;
+	GLushort zval;
+	GLint clear_color;
+	GLuint color;
+} ClearJob;
+static ClearJob clear_job;
+
+static inline void memset_custom_s(void* restrict adr, GLint val, GLint count);
+static inline void memset_l(void* restrict adr, GLint val, GLint count);
 
 static void copy_job_func(void* arg) {
 	CopyJob* job = (CopyJob*)arg;
 	for (GLint y = 0; y < job->lines; ++y) {
 		memcpy((GLbyte*)job->dst + y * job->stride, job->src + y * job->width, (size_t)job->width * sizeof(PIXEL));
+	}
+}
+
+static void clear_job_func(void* arg) {
+	ClearJob* job = (ClearJob*)arg;
+	PIXEL* pp = job->dst;
+	if (job->clear_z) {
+		memset_custom_s(job->zbuf, job->zval, job->width * job->lines);
+	}
+	if (job->clear_color) {
+		for (GLint y = 0; y < job->lines; ++y) {
+#if TGL_FEATURE_RENDER_BITS == 15 || TGL_FEATURE_RENDER_BITS == 16
+			memset_custom_s(pp, job->color, job->width);
+#elif TGL_FEATURE_RENDER_BITS == 32
+			memset_l(pp, job->color, job->width);
+#else
+#error BADJUJU
+#endif
+			pp = (PIXEL*)((GLbyte*)pp + job->stride);
+		}
 	}
 }
 ZBuffer* ZB_open(GLint xsize, GLint ysize, GLint mode,
@@ -82,6 +118,10 @@ ZBuffer* ZB_open(GLint xsize, GLint ysize, GLint mode,
 	copy_thread.execute = copy_job_func;
 	copy_thread.argument = &copy_job;
 	start_c11_lsthread(&copy_thread);
+	init_c11_lsthread(&clear_thread);
+	clear_thread.execute = clear_job_func;
+	clear_thread.argument = &clear_job;
+	start_c11_lsthread(&clear_thread);
 
 	return zb;
 error:
@@ -96,6 +136,8 @@ void ZB_close(ZBuffer* zb) {
 
 	kill_c11_lsthread(&copy_thread);
 	destroy_c11_lsthread(&copy_thread);
+	kill_c11_lsthread(&clear_thread);
+	destroy_c11_lsthread(&clear_thread);
 
 	gl_free(zb->zbuf);
 	gl_free(zb);
@@ -371,12 +413,31 @@ void ZB_clear(ZBuffer* restrict zb, GLint clear_z, GLint z, GLint clear_color, G
 	GLuint color;
 	GLint y;
 	PIXEL* pp;
+	GLint half = zb->ysize;
+	if (tgl_threads_enabled && zb->ysize >= 64) {
+		half = zb->ysize / 2;
+		clear_job.dst = zb->pbuf + half * zb->xsize;
+		clear_job.zbuf = zb->zbuf + half * zb->xsize;
+		clear_job.width = zb->xsize;
+		clear_job.stride = zb->linesize;
+		clear_job.lines = zb->ysize - half;
+		clear_job.clear_z = clear_z;
+		clear_job.zval = z;
+		clear_job.clear_color = clear_color;
+#if TGL_FEATURE_FORCE_CLEAR_NO_COPY_COLOR
+		clear_job.color = TGL_NO_COPY_COLOR;
+#else
+		clear_job.color = RGB_TO_PIXEL(r, g, b);
+#endif
+		step_c11_lsthread(&clear_thread);
+	}
+
 	if (clear_z) {
-		memset_custom_s(zb->zbuf, z, zb->xsize * zb->ysize);
+		memset_custom_s(zb->zbuf, z, zb->xsize * half);
 	}
 	if (clear_color) {
 		pp = zb->pbuf;
-		for (y = 0; y < zb->ysize; y++) {
+		for (y = 0; y < half; y++) {
 #if TGL_FEATURE_RENDER_BITS == 15 || TGL_FEATURE_RENDER_BITS == 16
 			// color = RGB_TO_PIXEL(r, g, b);
 #if TGL_FEATURE_FORCE_CLEAR_NO_COPY_COLOR
@@ -398,4 +459,6 @@ void ZB_clear(ZBuffer* restrict zb, GLint clear_z, GLint z, GLint clear_color, G
 			pp = (PIXEL*)((GLbyte*)pp + zb->linesize);
 		}
 	}
+	if (tgl_threads_enabled && zb->ysize >= 64)
+		lock_c11_lsthread(&clear_thread);
 }
