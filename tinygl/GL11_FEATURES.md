@@ -9,6 +9,7 @@ The following core features are implemented:
   glFogiv, glAlphaFunc)
 - Texture objects (`glTexImage`, `glBindTexture`, `glCopyTexImage`)
 - BGR/BGRA pixel formats for textures and readback
+- Optional KTX loader to import textures and cube maps
 - `glDrawRangeElements` for indexed vertex drawing
 - `glDrawElements` convenience wrapper for indexed drawing
 - `glDepthFunc` selects depth test comparison

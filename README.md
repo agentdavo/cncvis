@@ -33,6 +33,7 @@ Unit tests cover common OpenGL calls, BGR uploads, draw range/element helpers, a
 - BGR/BGRA texture upload and readback
 - `glDrawRangeElements`, `glDrawElements` and depth function support
 - Optional lock-step worker thread controlled by `TINYGL_ENABLE_THREADS`
+- KTX texture loader for loading compressed assets
 - Additional unit tests including a comprehensive GL feature check
 
 ## License

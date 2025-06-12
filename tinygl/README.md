@@ -629,6 +629,8 @@ pixel or 32 bit RGBA if needed.
 - Fast texture mapping capabilities, with perspective correction and
 texture objects.
 
+- Optional loader for KTX texture files for easy asset import.
+
 - 32 bit float only arithmetic.
 
 - Very small: compiled code size of about 40 kB on x86. The file

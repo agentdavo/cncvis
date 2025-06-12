@@ -24,6 +24,7 @@ set(tinygl_srcs
   evaluators.c
   fog.c
   profiling.c
+  ktx_loader.c
   )
 
 if(TINYGL_ENABLE_THREADS)
