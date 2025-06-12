@@ -2,7 +2,7 @@
 #include "zgl.h"
 #include <stdlib.h>
 
-#define ZCMP(z, zpix) (!(zbdt) || z >= (zpix))
+#define ZCMP(z, zpix) (!(zbdt) || ZB_depth_test(zb, z, zpix))
 
 /* TODO: Implement point size. */
 /* TODO: Implement blending for lines and points. */

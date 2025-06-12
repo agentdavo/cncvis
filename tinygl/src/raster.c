@@ -7,7 +7,9 @@
 #include <stdalign.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#if TGL_ENABLE_THREADS
 #include <threads.h>
+#endif
 
 static void gl_vertex_transform_raster(GLVertex* v) {
 	GLContext* c = gl_get_context();
@@ -103,7 +105,7 @@ void glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, voi
 	p[3].p = data;
 	gl_add_op(p);
 }
-#define ZCMP(z, zpix) (!(zbdt) || z >= (zpix))
+#define ZCMP(z, zpix) (!(zbdt) || ZB_depth_test(zb, z, zpix))
 #define CLIPTEST(_x, _y, _w, _h) ((0 <= _x) && (_w > _x) && (0 <= _y) && (_h > _y))
 void glopDrawPixels(GLParam* p) {
 	GLContext* c = gl_get_context();

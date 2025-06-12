@@ -4,7 +4,9 @@
 #include <math.h>
 #include <stdalign.h>
 #include <stdbool.h>
+#if TGL_ENABLE_THREADS
 #include <threads.h>
+#endif
 
 #include "lockstepthread.h"
 
@@ -22,7 +24,7 @@ typedef struct {
 } RasterJob;
 
 #ifndef NUM_RASTER_THREADS
-#define NUM_RASTER_THREADS 4
+#define NUM_RASTER_THREADS TGL_NUM_THREADS
 #endif
 static c11_lsthread raster_threads[NUM_RASTER_THREADS];
 static RasterJob raster_jobs[NUM_RASTER_THREADS];
@@ -74,7 +76,7 @@ static void raster_job(void* arg) {
 				float z = 1.0f / iz;
 				unsigned int zz = (unsigned int)(z / (1 << ZB_POINT_Z_FRAC_BITS));
 				GLushort* pz = zb->zbuf + y * zb->xsize + x;
-				if (!zb->depth_test || zz >= *pz) {
+				if (!zb->depth_test || ZB_depth_test(zb, zz, *pz)) {
 					PIXEL* pp = (PIXEL*)((unsigned char*)zb->pbuf + y * zb->linesize + x * PSZB);
 					PIXEL col;
 					if (job->mode == 0) {

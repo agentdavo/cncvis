@@ -209,7 +209,12 @@ void glopCallList(GLParam* p) {
 		if (op == OP_NextBuffer) {
 			p = (GLParam*)p[1].p;
 		} else {
-			op_table_func[op](p);
+#if TGL_FEATURE_PROFILING
+			if (tgl_profile_enabled)
+				tgl_profile_call(op, op_table_func[op], p);
+			else
+#endif
+				op_table_func[op](p);
 			p += op_table_size[op];
 		}
 	}
