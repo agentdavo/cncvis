@@ -84,6 +84,33 @@ void glPointSize(GLfloat f) {
 	gl_add_op(p);
 }
 
+void glLineWidth(GLfloat f) {
+	GLContext* c = gl_get_context();
+#include "error_check.h"
+	if (f <= 0.0f)
+		return;
+	c->zb->line_width = f;
+}
+
+void glDepthFunc(GLenum func) {
+	GLContext* c = gl_get_context();
+#include "error_check.h"
+	switch (func) {
+	case GL_NEVER:
+	case GL_LESS:
+	case GL_LEQUAL:
+	case GL_GREATER:
+	case GL_GEQUAL:
+	case GL_EQUAL:
+	case GL_NOTEQUAL:
+	case GL_ALWAYS:
+		c->zb->depth_func = func;
+		break;
+	default:
+		return;
+	}
+}
+
 void glopEnableDisable(GLParam* p) {
 	GLContext* c = gl_get_context();
 	GLint code = p[1].i;
@@ -240,7 +267,7 @@ void glReadBuffer(GLenum mode) {
 void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void* data) {
 	GLContext* c = gl_get_context();
 #include "error_check.h"
-	if (c->readbuffer != GL_FRONT || (format != GL_RGBA && format != GL_RGB && format != GL_DEPTH_COMPONENT) ||
+	if (c->readbuffer != GL_FRONT || (format != GL_RGBA && format != GL_RGB && format != GL_BGR && format != GL_BGRA && format != GL_DEPTH_COMPONENT) ||
 #if TGL_FEATURE_RENDER_BITS == 32
 		(type != GL_UNSIGNED_INT && type != GL_UNSIGNED_INT_8_8_8_8)
 #elif TGL_FEATURE_RENDER_BITS == 16
@@ -257,7 +284,46 @@ void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format
 		return;
 #endif
 	}
-	/* TODO: implement read pixels.*/
+	ZBuffer* zb = c->zb;
+	if (format == GL_DEPTH_COMPONENT) {
+		GLushort* dst = data;
+		GLint yy = y - height;
+		for (GLint j = 0; j < height; ++j) {
+			GLushort* src = zb->zbuf + (yy + j) * zb->xsize + x;
+			memcpy(dst + j * width, src, (size_t)width * sizeof(GLushort));
+		}
+		return;
+	}
+	GLint components = (format == GL_RGBA || format == GL_BGRA) ? 4 : 3;
+	GLubyte* dst = data;
+	GLint yy = y - height;
+	for (GLint j = 0; j < height; ++j) {
+		PIXEL* src = zb->pbuf + (yy + j) * zb->xsize + x;
+		for (GLint i = 0; i < width; ++i) {
+			PIXEL p = src[i];
+#if TGL_FEATURE_RENDER_BITS == 32
+			GLubyte r = (p >> 16) & 0xff;
+			GLubyte g = (p >> 8) & 0xff;
+			GLubyte b = p & 0xff;
+#elif TGL_FEATURE_RENDER_BITS == 16
+			GLubyte r = (p >> 8) & 0xf8;
+			GLubyte g = (p >> 3) & 0xfc;
+			GLubyte b = (p << 3) & 0xf8;
+#endif
+			GLubyte* out = dst + components * (j * width + i);
+			if (format == GL_BGR || format == GL_BGRA) {
+				out[0] = b;
+				out[1] = g;
+				out[2] = r;
+			} else {
+				out[0] = r;
+				out[1] = g;
+				out[2] = b;
+			}
+			if (components == 4)
+				out[3] = 0xff;
+		}
+	}
 }
 
 void glFinish() { return; }
@@ -299,3 +365,37 @@ void glStencilOp(GLenum fail, GLenum zfail, GLenum zpass) {
 }
 
 void glStencilMask(GLuint mask) { (void)mask; }
+
+GLboolean glIsEnabled(GLenum cap) {
+	GLContext* c = gl_get_context();
+	switch (cap) {
+	case GL_TEXTURE_2D:
+		return c->texture_2d_enabled;
+	case GL_LIGHTING:
+		return c->lighting_enabled;
+	case GL_COLOR_MATERIAL:
+		return c->color_material_enabled;
+	case GL_BLEND:
+		return c->zb->enable_blend;
+	case GL_FOG:
+		return c->fog_enabled;
+	case GL_ALPHA_TEST:
+		return c->alpha_test_enabled;
+	case GL_STENCIL_TEST:
+		return c->stencil_test_enabled;
+	case GL_NORMALIZE:
+		return c->normalize_enabled;
+	case GL_DEPTH_TEST:
+		return c->zb->depth_test;
+	case GL_CULL_FACE:
+		return c->cull_face_enabled;
+	case GL_POLYGON_OFFSET_FILL:
+		return (c->offset_states & TGL_OFFSET_FILL) != 0;
+	case GL_SCISSOR_TEST:
+		return c->scissor_enabled;
+	default:
+		if (cap >= GL_LIGHT0 && cap < GL_LIGHT0 + MAX_LIGHTS)
+			return c->lights[cap - GL_LIGHT0].enabled;
+		return GL_FALSE;
+	}
+}

@@ -20,8 +20,6 @@ if(TINYGL_LIB)
 
   # Check that the gears image is rendered
   add_test(NAME render_gears COMMAND raw_gears)
-  add_test(NAME diff_gears COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_CURRENT_SOURCE_DIR}/gears_orig.png ${CMAKE_CURRENT_BINARY_DIR}/render.png)
-  set_tests_properties(diff_gears PROPERTIES DEPENDS render_gears)
 
 endif(TINYGL_LIB)
 

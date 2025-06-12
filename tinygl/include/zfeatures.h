@@ -2,6 +2,16 @@
 #define _tgl_features_h_
 /* It is possible to enable/disable (compile time) features in this
    header file. */
+
+#ifndef TGL_ENABLE_THREADS
+#define TGL_ENABLE_THREADS 1
+#endif
+#ifndef TGL_NUM_THREADS
+#define TGL_NUM_THREADS 4
+#endif
+#ifndef TGL_FEATURE_PROFILING
+#define TGL_FEATURE_PROFILING 0
+#endif
 /*
 Enables setting the error flags when there's an error, so you can check it with
 glGetError Disabling this has slight performance gains.

@@ -1,150 +1,39 @@
-#cncvis : Lightweight CNC Machine Visualization
+# cncvis
 
-`cncvis` is a compact C library for rendering and animating CNC machines.
-It parses an XML description of the machine, loads STL files for the
-individual parts and draws them using **TinyGL**. The project is self
-contained – TinyGL, a simple STL loader and the Mini-XML parser are
-included in subdirectories.
+Lightweight CNC machine visualization library built around TinyGL. It loads machine descriptions from XML, renders STL models and exposes a small camera and lighting API.
 
-![Alt text](frame.png "a title")
-
-## Features
-
-- **Hierarchical assemblies** – build kinematic chains from movable
-  assemblies and actors.
-- **STL model support** – load models using the included STL IO library.
-- **Lighting** – configure multiple OpenGL style lights.
-- **Camera API** – orbit, pan, zoom and preset views.
-- **On-screen display** – draw text and simple shapes over the 3D view.
-- **C11 vector math** – use `zmath.h` for aligned calculations.
-- **Lock-step threading** – `tinygl/src/lockstepthread.h` uses the C11 `<threads.h>` API
-  to run a worker thread in deterministic steps.
-- **32-bit ARGB pixel quads** – color buffers use 4‑pixel blocks aligned to
-  16 bytes for LVGL‑friendly transfers.
-- **XML configuration** – define machines and scene properties in one file.
-
-## Directory layout
-
-```
-cncvis/
-  tinygl/     - software OpenGL implementation
-  libstlio/   - minimal STL loading library
-  mxml/       - Mini-XML parser
-  stb/        - subset of stb headers (image loading, etc.)
-  machines/   - example machine configurations and STL models
-```
+## Directory Layout
+- **tinygl/** – software OpenGL implementation
+- **libstlio/** – simple STL loader
+- **mxml/** – Mini-XML parser
+- **stb/** – minimal subset of stb headers
+- **machines/** – example machine configurations
 
 ## Building
+1. Configure with CMake
+   ```bash
+   cmake -S cncvis -B build
+   cmake --build build
+   ```
+2. Optional settings
+   - `-DTINYGL_BUILD_DEBUG=ON` builds an unoptimised TinyGL library
+   - `-DTINYGL_ENABLE_THREADS=OFF` disables the helper worker thread
+   - `-DTINYGL_NUM_THREADS=<n>` controls worker count
 
-The library is built using CMake and requires a C compiler with C11
-support. The following commands build `libcncvis.a` and several TinyGL
-sample programs:
+The build produces `libcncvis.a` and several TinyGL demos under `build/`.
 
-```bash
-cmake -S cncvis -B build
-cmake --build build
-```
-
-This produces a static library and a few TinyGL based demos under `build/`.
-
-## Running tests
-
-After building the project you can run the tests with CTest:
-
+## Tests
+Run the suite with:
 ```bash
 ctest --test-dir build --output-on-failure
 ```
+Unit tests cover common OpenGL calls, BGR uploads, draw range/element helpers, and basic rendering benchmarks.
 
-The TinyGL gears demo outputs `build/tinygl/Raw_Demos/render.png`. This image is
-compared against `tinygl/Raw_Demos/gears_orig.png`. If the comparison fails,
-replace `gears_orig.png` with the newly generated render to update the
-reference.
-
-The `test_orbit_video` test also produces an `orbit.mp4` video in the project
-root using `ffmpeg`. This shows the camera orbiting the loaded machine.
-
-## Configuration files
-
-Each machine is described by an XML file. Assemblies form a tree where
-children inherit the transformation of their parent. Actors reference
-STL files and are attached to assemblies. Lights define the scene
-illumination. See `machines/meca500/config.xml` for a complete example.
-
-### Configuration reference
-
-```
-<config>
-  <assemblies>
-    <assembly name="base" parent="NULL">
-      <origin x="0" y="0" z="0"/>
-      <position x="0" y="0" z="0"/>
-      <rotation x="0" y="0" z="0"/>
-      <motion type="rotational" axis="Z" invert="no"/>
-      <home>
-        <position x="0" y="0" z="0"/>
-        <rotation x="0" y="0" z="0"/>
-      </home>
-    </assembly>
-    ...
-  </assemblies>
-  <actors>
-    <actor name="base_part" assembly="base" stlFile="base.stl"/>
-    ...
-  </actors>
-  <lights>
-    <light id="GL_LIGHT0">
-      <position x="0" y="0" z="0"/>
-      <ambient r="0" g="0" b="0"/>
-      <diffuse r="1" g="1" b="1"/>
-      <specular r="1" g="1" b="1"/>
-    </light>
-    ...
-  </lights>
-</config>
-```
-
-- **Assemblies** describe movable joints or rigid groups and may reference
-  other assemblies to form a hierarchy.
-- **Actors** attach an STL model to an assembly and optionally specify a color.
-- **Lights** follow the TinyGL style definitions and support spotlights
-  and attenuation parameters.
-
-## Using the API
-
-Include `api.h` and link with `libcncvis.a`. A minimal program
-looks like:
-
-```c
-#include "api.h"
-
-int main(void) {
-  if (cncvis_init("machines/meca500/config.xml") != 0)
-    return 1; // load machine and prepare renderer
-
-  // render a single frame (normally done every loop)
-  cncvis_render();
-
-  cncvis_cleanup();
-  return 0;
-}
-```
-
-### Controlling the simulation
-
-Use `ucncUpdateMotionByName()` to move joints by name or
-`ucncUpdateMotion()` when you already have a pointer to an assembly.
-After updating the motion values, call `cncvis_render()` again to redraw
-the scene. The frame buffer contents can be accessed with
-`ucncGetZBufferOutput()` for integration into GUI frameworks.
-
-### Camera utilities
-
-The library provides CAD-style controls:
-`ucncCameraPan`, `ucncCameraOrbit`, `ucncCameraZoom`, `ucncCameraSetFrontView`
-and related helpers. Map these to your input events (e.g. SDL or GLFW)
-to implement interactive viewing.
+## Recent Changes
+- BGR/BGRA texture upload and readback
+- `glDrawRangeElements`, `glDrawElements` and depth function support
+- Optional lock-step worker thread controlled by `TINYGL_ENABLE_THREADS`
+- Additional unit tests including a comprehensive GL feature check
 
 ## License
-
-This project is released under the MIT License. See `LICENSE` for
-full details.
+MIT. See `LICENSE` for details.

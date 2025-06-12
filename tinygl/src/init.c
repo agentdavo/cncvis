@@ -2,8 +2,9 @@
 #include "gl_utils.h"
 #include "internal.h"
 #include "zgl.h"
+#include <stdlib.h>
 GLContext gl_ctx;
-int tgl_threads_enabled = 1;
+int tgl_threads_enabled = TGL_ENABLE_THREADS;
 static const GLContext empty_gl_ctx = {0};
 
 static void initSharedState(GLContext* c) {
@@ -166,6 +167,11 @@ void glInit(void* zbuffer1) {
 	c = &gl_ctx;
 	if (!c)
 		gl_fatal_error("TINYGL_CANNOT_INIT_OOM");
+#if TGL_FEATURE_PROFILING
+	const char* prof = getenv("TGL_PROFILING");
+	if (prof && atoi(prof) != 0)
+		tgl_enable_profiling(1);
+#endif
 
 	c->zb = zbuffer;
 #if TGL_FEATURE_ERROR_CHECK == 1
@@ -371,6 +377,8 @@ void glInit(void* zbuffer1) {
 	/* depth test */
 	c->zb->depth_test = 0;
 	c->zb->depth_write = 1;
+	c->zb->depth_func = GL_LEQUAL;
+	c->zb->line_width = 1.0f;
 	c->zb->pointsize = 1;
 
 	/* raster position */
@@ -386,6 +394,8 @@ void glInit(void* zbuffer1) {
 	c->rasterposvalid = 0;
 	c->pzoomx = 1;
 	c->pzoomy = 1;
+	c->unpack_alignment = 1;
+	c->pack_alignment = 1;
 }
 
 void glClose(void) {

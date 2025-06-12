@@ -20,7 +20,7 @@ enum {
 #define ADD_OP(a, b, c) OP_##a,
 
 #include "opinfo.h"
-
+	OP_COUNT
 };
 
 #if TGL_FEATURE_GL_POLYGON == 1
@@ -148,6 +148,10 @@ typedef struct GLTexture {
 	GLImage images[MAX_TEXTURE_LEVELS];
 	struct GLTexture *next, *prev;
 	GLint handle;
+	GLint wrap_s;
+	GLint wrap_t;
+	GLint min_filter;
+	GLint mag_filter;
 } GLTexture;
 
 /* buffers */
@@ -223,6 +227,7 @@ typedef struct GLContext {
 	/* textures */
 
 	GLint texture_2d_enabled;
+	GLint texture_env_mode;
 
 	/* current list */
 
@@ -341,6 +346,8 @@ typedef struct GLContext {
 	/* raster position */
 	GLint rasterpos_zz;
 	GLfloat pzoomx, pzoomy;
+	GLint unpack_alignment;
+	GLint pack_alignment;
 	GLVertex rastervertex;
 	/* text */
 	GLTEXTSIZE textsize;
@@ -371,7 +378,12 @@ static void gl_add_op(GLParam* p) {
 	GLint op;
 	op = p[0].op;
 	if (c->exec_flag) {
-		op_table_func[op](p);
+#if TGL_FEATURE_PROFILING
+		if (tgl_profile_enabled)
+			tgl_profile_call(op, op_table_func[op], p);
+		else
+#endif
+			op_table_func[op](p);
 #if TGL_FEATURE_ERROR_CHECK == 1
 #include "error_check.h"
 #endif

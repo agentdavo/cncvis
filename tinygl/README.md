@@ -4,7 +4,11 @@
 A major overhaul of Fabrice Bellard's TinyGL to be
 more useful as a software rasterizer.
 
-Now with limited multithreading support
+Optional C11 multithreading support
+
+`api.c` remains in the build for compatibility with earlier versions. It now
+defines a no-op `tinygl_api_stub()` function so that the file compiles cleanly
+without generating warnings.
 
 
 ## Tightly tweaked and tuned for performance
@@ -171,10 +175,18 @@ The changelog is as such:
 * Tuned the transformations to absolute perfection
 
 * Added glDrawArrays
+* Added glDrawElements
+* Added glDepthFunc and line width state tracking
 
 * Added Buffers (For memory management purposes)
 
 * Added glTexImage1D (... it just resizes it to 2D, but it works!)
+* Added glTexSubImage1D/2D and glCopyTexSubImage2D
+* Added glIsEnabled
+* Added glPixelStorei and glPixelStoref
+* Added float variants of glTexEnv and glTexParameter
+* Added glReadPixels for framebuffer capture
+* Optional per-function profiling with `-DTINYGL_ENABLE_PROFILING=ON` and `--profiling` demo flag
 
 * Added glPixelSize (TODO is to implement distance scaling)
 
@@ -331,7 +343,11 @@ There is no FILE* usage, or I/O outside of 'msghandling.c' so if you want to rem
 
 ### Multithreading support
 
-TinyGL uses a small lock-step worker thread to speed up a few heavy operations.
+TinyGL can optionally spin up a small lock-step worker thread to speed up a few
+heavy operations. Pass `-DTINYGL_ENABLE_THREADS=ON` (the default) to CMake to
+enable it or `OFF` for a pure single-thread build. Adjust the number of worker
+threads with `-DTINYGL_NUM_THREADS=<n>` (default 4).
+This approach avoids relying on `stdatomic` operations so TinyGL remains portable even on platforms where C11 atomics are missing or slow.
 
 
 These are the operations that are accelerated by multithreading:
@@ -354,6 +370,13 @@ These are the operations that are accelerated by multithreading:
 
 You do not need a multicore processor to use TinyGL—the worker thread simply
 helps overlap memory operations.
+
+### Profiling support
+
+Pass `-DTINYGL_ENABLE_PROFILING=ON` when configuring CMake to build TinyGL with
+per‑function profiling hooks. Any demo built with this option accepts a
+`--profiling` flag. When enabled, TinyGL counts each `gl*` call, measures the CPU
+cycles and time spent inside, and prints a summary after exit.
 
 ### Performance Recommendations
 
