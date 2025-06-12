@@ -25,3 +25,4 @@ This document tracks progress of the 18-step refactoring plan. The goal is to sp
 |19|Always use multithreaded paths, remove single-thread code|Completed|
 |20|Merge `chad_math.h` into `zmath` for SIMD-friendly math|Completed|
 |21|Add cube benchmark test comparing threading performance|Completed|
+|22|Implement optional KTX texture loader|Completed|
