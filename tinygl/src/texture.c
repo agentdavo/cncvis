@@ -6,7 +6,7 @@
 #include "lockstepthread.h"
 #include "zgl.h"
 
-#define NUM_TEX_THREADS 4
+#define NUM_TEX_THREADS TGL_NUM_THREADS
 typedef void (*RowFunc)(const void*, void*, GLint);
 typedef struct {
 	const void* src;
@@ -48,6 +48,22 @@ static inline void row_convert_rgb(const void* restrict src, void* restrict dst,
 		s += 3;
 	}
 }
+static inline void row_convert_bgr(const void* restrict src, void* restrict dst, GLint w) {
+	const GLubyte* s = (const GLubyte*)src;
+	PIXEL* d = (PIXEL*)dst;
+	for (GLint i = 0; i < w; ++i) {
+		d[i] = ((PIXEL)s[2] << 16) | ((PIXEL)s[1] << 8) | (PIXEL)s[0];
+		s += 3;
+	}
+}
+static inline void row_convert_bgra(const void* restrict src, void* restrict dst, GLint w) {
+	const GLubyte* s = (const GLubyte*)src;
+	PIXEL* d = (PIXEL*)dst;
+	for (GLint i = 0; i < w; ++i) {
+		d[i] = ((PIXEL)s[2] << 16) | ((PIXEL)s[1] << 8) | (PIXEL)s[0];
+		s += 4;
+	}
+}
 #elif TGL_FEATURE_RENDER_BITS == 16
 static inline void row_convert_rgb(const void* restrict src, void* restrict dst, GLint w) {
 	const GLubyte* s = (const GLubyte*)src;
@@ -55,6 +71,22 @@ static inline void row_convert_rgb(const void* restrict src, void* restrict dst,
 	for (GLint i = 0; i < w; ++i) {
 		d[i] = (GLushort)(((s[0] & 0xF8) << 8) | ((s[1] & 0xFC) << 3) | ((s[2] & 0xF8) >> 3));
 		s += 3;
+	}
+}
+static inline void row_convert_bgr(const void* restrict src, void* restrict dst, GLint w) {
+	const GLubyte* s = (const GLubyte*)src;
+	GLushort* d = (GLushort*)dst;
+	for (GLint i = 0; i < w; ++i) {
+		d[i] = (GLushort)(((s[2] & 0xF8) << 8) | ((s[1] & 0xFC) << 3) | ((s[0] & 0xF8) >> 3));
+		s += 3;
+	}
+}
+static inline void row_convert_bgra(const void* restrict src, void* restrict dst, GLint w) {
+	const GLubyte* s = (const GLubyte*)src;
+	GLushort* d = (GLushort*)dst;
+	for (GLint i = 0; i < w; ++i) {
+		d[i] = (GLushort)(((s[2] & 0xF8) << 8) | ((s[1] & 0xFC) << 3) | ((s[0] & 0xF8) >> 3));
+		s += 4;
 	}
 }
 #endif
@@ -168,6 +200,10 @@ GLTexture* alloc_texture(GLint h) {
 	*ht = t;
 
 	t->handle = h;
+	t->wrap_s = GL_REPEAT;
+	t->wrap_t = GL_REPEAT;
+	t->min_filter = GL_NEAREST;
+	t->mag_filter = GL_NEAREST;
 
 	return t;
 }
@@ -176,6 +212,7 @@ void glInitTextures() {
 	/* textures */
 	GLContext* c = gl_get_context();
 	c->texture_2d_enabled = 0;
+	c->texture_env_mode = GL_MODULATE;
 	c->current_texture = find_texture(0);
 	for (int i = 0; i < NUM_TEX_THREADS; ++i) {
 		init_c11_lsthread(&tex_threads[i]);
@@ -261,6 +298,32 @@ void glTexImage1D(GLint target, GLint level, GLint components, GLint width, GLin
 	gl_add_op(p);
 }
 
+void glTexImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type,
+				  const void* pixels) {
+	if (depth != 1) {
+		gl_fatal_error("glTexImage3D: only depth 1 supported");
+		return;
+	}
+	glTexImage2D(target, level, internalformat, width, height, border, format, type, (void*)pixels);
+}
+
+void glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format,
+					 GLenum type, const void* pixels) {
+	if (zoffset != 0 || depth != 1) {
+		gl_fatal_error("glTexSubImage3D: only depth 1 supported");
+		return;
+	}
+	glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
+}
+
+void glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height) {
+	if (zoffset != 0) {
+		gl_fatal_error("glCopyTexSubImage3D: only depth 1 supported");
+		return;
+	}
+	glCopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height);
+}
+
 void glBindTexture(GLint target, GLint texture) {
 	GLParam p[3];
 #include "error_check_no_context.h"
@@ -272,14 +335,32 @@ void glBindTexture(GLint target, GLint texture) {
 }
 
 void glTexEnvi(GLint target, GLint pname, GLint param) {
-
+	GLParam p[4];
 #include "error_check_no_context.h"
+	p[0].op = OP_TexEnvi;
+	p[1].i = target;
+	p[2].i = pname;
+	p[3].i = param;
+	gl_add_op(p);
 }
+
+void glTexEnvf(GLint target, GLint pname, GLfloat param) { glTexEnvi(target, pname, (GLint)param); }
+
+void glTexEnvfv(GLint target, GLint pname, const GLfloat* params) { glTexEnvf(target, pname, params[0]); }
 
 void glTexParameteri(GLint target, GLint pname, GLint param) {
-
+	GLParam p[4];
 #include "error_check_no_context.h"
+	p[0].op = OP_TexParameter;
+	p[1].i = target;
+	p[2].i = pname;
+	p[3].i = param;
+	gl_add_op(p);
 }
+
+void glTexParameterf(GLint target, GLint pname, GLfloat param) { glTexParameteri(target, pname, (GLint)param); }
+
+void glTexParameterfv(GLint target, GLint pname, const GLfloat* params) { glTexParameterf(target, pname, params[0]); }
 
 void glopBindTexture(GLParam* p) {
 	GLint target = p[1].i;
@@ -439,8 +520,9 @@ void glopTexImage1D(GLParam* p) {
 			gl_fatal_error("glTexImage2D: combination of parameters not handled!!");
 #endif
 	}
-	if (width != TGL_FEATURE_TEXTURE_DIM || height != TGL_FEATURE_TEXTURE_DIM) {
-		pixels1 = gl_malloc(TGL_FEATURE_TEXTURE_DIM * TGL_FEATURE_TEXTURE_DIM * 3); /* GUARDED*/
+	GLint comps = (format == GL_BGRA) ? 4 : 3;
+	if ((format != GL_BGRA) && (width != TGL_FEATURE_TEXTURE_DIM || height != TGL_FEATURE_TEXTURE_DIM)) {
+		pixels1 = gl_malloc(TGL_FEATURE_TEXTURE_DIM * TGL_FEATURE_TEXTURE_DIM * comps); /* GUARDED*/
 		if (pixels1 == NULL) {
 #if TGL_FEATURE_ERROR_CHECK == 1
 #define ERROR_FLAG GL_OUT_OF_MEMORY
@@ -485,17 +567,18 @@ void glopTexImage2D(GLParam* p) {
 	GLImage* im;
 	GLubyte* pixels1;
 	GLint do_free = 0;
+	GLint comps = (format == GL_BGRA) ? 4 : 3;
 	GLContext* c = gl_get_context();
 	{
 #if TGL_FEATURE_ERROR_CHECK == 1
-		if (!(c->current_texture != NULL && target == GL_TEXTURE_2D && level == 0 && components == 3 && border == 0 && format == GL_RGB &&
-			  type == GL_UNSIGNED_BYTE))
+		if (!(c->current_texture != NULL && target == GL_TEXTURE_2D && level == 0 && (components == 3 || components == 4) && border == 0 &&
+			  (format == GL_RGB || format == GL_BGR || format == GL_BGRA) && type == GL_UNSIGNED_BYTE))
 #define ERROR_FLAG GL_INVALID_ENUM
 #include "error_check.h"
 
 #else
-		if (!(c->current_texture != NULL && target == GL_TEXTURE_2D && level == 0 && components == 3 && border == 0 && format == GL_RGB &&
-			  type == GL_UNSIGNED_BYTE))
+		if (!(c->current_texture != NULL && target == GL_TEXTURE_2D && level == 0 && (components == 3 || components == 4) && border == 0 &&
+			  (format == GL_RGB || format == GL_BGR || format == GL_BGRA) && type == GL_UNSIGNED_BYTE))
 			gl_fatal_error("glTexImage2D: combination of parameters not handled!!");
 #endif
 	}
@@ -527,83 +610,232 @@ void glopTexImage2D(GLParam* p) {
 		GLint strip = height / total;
 		for (int t = 0; t < NUM_TEX_THREADS; ++t) {
 			GLint start = t * strip;
-			tex_jobs[t].src = pixels1 + start * width * 3;
+			tex_jobs[t].src = pixels1 + start * width * comps;
 			tex_jobs[t].dst = im->pixmap + start * width;
-			tex_jobs[t].src_stride = width * 3;
+			tex_jobs[t].src_stride = width * comps;
 			tex_jobs[t].dst_stride = width * sizeof(PIXEL);
 			tex_jobs[t].width = width;
 			tex_jobs[t].lines = strip;
-			tex_jobs[t].fn = row_convert_rgb;
+			if (format == GL_BGR)
+				tex_jobs[t].fn = row_convert_bgr;
+			else if (format == GL_BGRA)
+				tex_jobs[t].fn = row_convert_bgra;
+			else
+				tex_jobs[t].fn = row_convert_rgb;
 			step_c11_lsthread(&tex_threads[t]);
 		}
 		GLint start = NUM_TEX_THREADS * strip;
 		for (GLint y = start; y < height; ++y)
-			row_convert_rgb(pixels1 + y * width * 3, im->pixmap + y * width, width);
+			if (format == GL_BGR)
+				row_convert_bgr(pixels1 + y * width * comps, im->pixmap + y * width, width);
+			else if (format == GL_BGRA)
+				row_convert_bgra(pixels1 + y * width * comps, im->pixmap + y * width, width);
+			else
+				row_convert_rgb(pixels1 + y * width * comps, im->pixmap + y * width, width);
 		for (int t = 0; t < NUM_TEX_THREADS; ++t)
 			lock_c11_lsthread(&tex_threads[t]);
 	} else {
-#if TGL_FEATURE_RENDER_BITS == 32
-		gl_convertRGB_to_8A8R8G8B(im->pixmap, pixels1, width, height);
-#elif TGL_FEATURE_RENDER_BITS == 16
-		gl_convertRGB_to_5R6G5B(im->pixmap, pixels1, width, height);
-#else
-#error Bad TGL_FEATURE_RENDER_BITS
-#endif
+		for (GLint y = 0; y < height; ++y) {
+			const GLubyte* s = pixels1 + y * width * comps;
+			PIXEL* d = im->pixmap + y * width;
+			if (format == GL_BGR)
+				row_convert_bgr(s, d, width);
+			else if (format == GL_BGRA)
+				row_convert_bgra(s, d, width);
+			else
+				row_convert_rgb(s, d, width);
+		}
 	}
 	if (do_free)
 		gl_free(pixels1);
 }
 
-/* TODO: not all tests are done */
-/*
-void glopTexEnv(GLContext* c, GLParam* p) {
+void glopTexEnvi(GLParam* p) {
+	GLContext* c = gl_get_context();
 	GLint target = p[1].i;
 	GLint pname = p[2].i;
 	GLint param = p[3].i;
 
-	if (target != GL_TEXTURE_ENV) {
-
-	error:
 #if TGL_FEATURE_ERROR_CHECK == 1
-
+	if (target != GL_TEXTURE_ENV || pname != GL_TEXTURE_ENV_MODE)
 #define ERROR_FLAG GL_INVALID_ENUM
 #include "error_check.h"
-#else
-		gl_fatal_error("glTexParameter: unsupported option");
 #endif
-
-	}
-
-	if (pname != GL_TEXTURE_ENV_MODE)
-		goto error;
-
-	if (param != GL_DECAL)
-		goto error;
+		if (target == GL_TEXTURE_ENV && pname == GL_TEXTURE_ENV_MODE)
+			c->texture_env_mode = param;
 }
-*/
-/* TODO: not all tests are done */
-/*
-void glopTexParameter(GLContext* c, GLParam* p) {
+
+void glopTexParameter(GLParam* p) {
+	GLContext* c = gl_get_context();
 	GLint target = p[1].i;
 	GLint pname = p[2].i;
 	GLint param = p[3].i;
 
-	if (target != GL_TEXTURE_2D &&
-		target != GL_TEXTURE_1D) {
-	error:
-		tgl_warning("glTexParameter: unsupported option");
-		return;
-	}
+#if TGL_FEATURE_ERROR_CHECK == 1
+	if (target != GL_TEXTURE_2D && target != GL_TEXTURE_1D)
+#define ERROR_FLAG GL_INVALID_ENUM
+#include "error_check.h"
+#endif
 
+		GLTexture* t = c->current_texture;
 	switch (pname) {
 	case GL_TEXTURE_WRAP_S:
+		t->wrap_s = param;
+		break;
 	case GL_TEXTURE_WRAP_T:
-		if (param != GL_REPEAT)
-			goto error;
+		t->wrap_t = param;
+		break;
+	case GL_TEXTURE_MIN_FILTER:
+		t->min_filter = param;
+		break;
+	case GL_TEXTURE_MAG_FILTER:
+		t->mag_filter = param;
+		break;
+	default:
 		break;
 	}
 }
-*/
+
+void glTexSubImage1D(GLint target, GLint level, GLint xoffset, GLsizei width, GLint format, GLint type, const void* pixels) {
+	GLParam p[9];
+#include "error_check_no_context.h"
+	p[0].op = OP_TexSubImage1D;
+	p[1].i = target;
+	p[2].i = level;
+	p[3].i = xoffset;
+	p[4].i = width;
+	p[5].i = format;
+	p[6].i = type;
+	p[7].p = (void*)pixels;
+	gl_add_op(p);
+}
+
+void glTexSubImage2D(GLint target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLint format, GLint type, const void* pixels) {
+	GLParam p[11];
+#include "error_check_no_context.h"
+	p[0].op = OP_TexSubImage2D;
+	p[1].i = target;
+	p[2].i = level;
+	p[3].i = xoffset;
+	p[4].i = yoffset;
+	p[5].i = width;
+	p[6].i = height;
+	p[7].i = format;
+	p[8].i = type;
+	p[9].p = (void*)pixels;
+	gl_add_op(p);
+}
+
+void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height) {
+	GLParam p[10];
+#include "error_check_no_context.h"
+	p[0].op = OP_CopyTexSubImage2D;
+	p[1].i = target;
+	p[2].i = level;
+	p[3].i = xoffset;
+	p[4].i = yoffset;
+	p[5].i = x;
+	p[6].i = y;
+	p[7].i = width;
+	p[8].i = height;
+	gl_add_op(p);
+}
+
+static void copy_subimage(GLImage* im, GLint xoff, GLint yoff, GLint w, GLint h, const PIXEL* src, GLint src_stride) {
+	PIXEL* dst = im->pixmap + yoff * im->xsize + xoff;
+	if (tgl_threads_enabled && w * h >= 4096) {
+		int total = NUM_TEX_THREADS + 1;
+		GLint strip = h / total;
+		for (int t = 0; t < NUM_TEX_THREADS; ++t) {
+			GLint start = t * strip;
+			tex_jobs[t].src = src + start * src_stride / sizeof(PIXEL);
+			tex_jobs[t].dst = dst + start * im->xsize;
+			tex_jobs[t].src_stride = src_stride;
+			tex_jobs[t].dst_stride = im->xsize * sizeof(PIXEL);
+			tex_jobs[t].width = w;
+			tex_jobs[t].lines = strip;
+			tex_jobs[t].fn = row_copy_pixels;
+			step_c11_lsthread(&tex_threads[t]);
+		}
+		GLint start = NUM_TEX_THREADS * strip;
+		for (GLint j = start; j < h; ++j)
+			row_copy_pixels(src + j * (src_stride / sizeof(PIXEL)), dst + j * im->xsize, w);
+		for (int t = 0; t < NUM_TEX_THREADS; ++t)
+			lock_c11_lsthread(&tex_threads[t]);
+	} else {
+		for (GLint j = 0; j < h; ++j)
+			memcpy(dst + j * im->xsize, src + j * (src_stride / sizeof(PIXEL)), (size_t)w * sizeof(PIXEL));
+	}
+}
+
+void glopTexSubImage1D(GLParam* p) {
+	GLint target = p[1].i;
+	GLint level = p[2].i;
+	GLint xoffset = p[3].i;
+	GLint width = p[4].i;
+	GLint format = p[5].i;
+	GLint type = p[6].i;
+	void* pixels = p[7].p;
+	GLContext* c = gl_get_context();
+	if (!(c->current_texture && target == GL_TEXTURE_1D && level == 0 && format == GL_RGB && type == GL_UNSIGNED_BYTE))
+		return;
+	GLImage* im = &c->current_texture->images[level];
+	if (xoffset < 0 || xoffset + width > im->xsize)
+		return;
+	GLubyte* buf = pixels;
+	PIXEL tmp[width];
+	for (GLint i = 0; i < width; ++i) {
+		tmp[i] = ((PIXEL)buf[3 * i] << 16) | ((PIXEL)buf[3 * i + 1] << 8) | (PIXEL)buf[3 * i + 2];
+	}
+	memcpy(im->pixmap + xoffset, tmp, (size_t)width * sizeof(PIXEL));
+}
+
+void glopTexSubImage2D(GLParam* p) {
+	GLint target = p[1].i;
+	GLint level = p[2].i;
+	GLint xoffset = p[3].i;
+	GLint yoffset = p[4].i;
+	GLint width = p[5].i;
+	GLint height = p[6].i;
+	GLint format = p[7].i;
+	GLint type = p[8].i;
+	void* pixels = p[9].p;
+	GLContext* c = gl_get_context();
+	if (!(c->current_texture && target == GL_TEXTURE_2D && level == 0 && format == GL_RGB && type == GL_UNSIGNED_BYTE))
+		return;
+	GLImage* im = &c->current_texture->images[level];
+	if (xoffset < 0 || yoffset < 0 || xoffset + width > im->xsize || yoffset + height > im->ysize)
+		return;
+	GLubyte* buf = pixels;
+	PIXEL line[width];
+	for (GLint y = 0; y < height; ++y) {
+		for (GLint x = 0; x < width; ++x) {
+			GLubyte* src = buf + 3 * (y * width + x);
+			line[x] = ((PIXEL)src[0] << 16) | ((PIXEL)src[1] << 8) | (PIXEL)src[2];
+		}
+		memcpy(im->pixmap + (yoffset + y) * im->xsize + xoffset, line, (size_t)width * sizeof(PIXEL));
+	}
+}
+
+void glopCopyTexSubImage2D(GLParam* p) {
+	GLint target = p[1].i;
+	GLint level = p[2].i;
+	GLint xoffset = p[3].i;
+	GLint yoffset = p[4].i;
+	GLint x = p[5].i;
+	GLint y = p[6].i;
+	GLint width = p[7].i;
+	GLint height = p[8].i;
+	GLContext* c = gl_get_context();
+	if (!(c->readbuffer == GL_FRONT && c->current_texture && target == GL_TEXTURE_2D))
+		return;
+	GLImage* im = &c->current_texture->images[level];
+	if (xoffset < 0 || yoffset < 0 || xoffset + width > im->xsize || yoffset + height > im->ysize)
+		return;
+	y -= height;
+	PIXEL* src = c->zb->pbuf + y * c->zb->xsize + x;
+	copy_subimage(im, xoffset, yoffset, width, height, src, c->zb->xsize * sizeof(PIXEL));
+}
 
 /*
 void glopPixelStore(GLContext* c, GLParam* p) {

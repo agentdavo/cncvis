@@ -1,6 +1,8 @@
 set(zhdrs
     zbuffer.h
     zfeatures.h
+    tinygl_api.h
+    ktx_loader.h
 )
 
 install(FILES ${zhdrs} DESTINATION ${INCLUDE_DIR})

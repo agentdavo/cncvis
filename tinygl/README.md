@@ -4,7 +4,11 @@
 A major overhaul of Fabrice Bellard's TinyGL to be
 more useful as a software rasterizer.
 
-Now with limited multithreading support
+Optional C11 multithreading support
+
+`api.c` remains in the build for compatibility with earlier versions. It now
+defines a no-op `tinygl_api_stub()` function so that the file compiles cleanly
+without generating warnings.
 
 
 ## Tightly tweaked and tuned for performance
@@ -130,7 +134,7 @@ OpenIMGUI standard demo:
 TinyGL 0.8 (c) 1997-2021 Fabrice Bellard, C-Chads, Gek (see License, it's free software)
 
 This is a maintained fork of TinyGL, by the C-Chads.
-It is a small, suckless Software-only partial GL 1.1 implementation.
+It is a small, suckless Software-only **full** GL 1.2 implementation.
 
 The original project was by Fabrice Bellard. We have forked it.
 
@@ -142,7 +146,7 @@ The changelog is as such:
 
 * Removed the entire GLX/NanoGLX part of the library. Not portable and mostly useless.
 
-* Implemented new functions and some more of GL 1.1's prototypes including polygon stipple.
+* Implemented new functions and some more of GL 1.2's prototypes including polygon stipple.
 
 * Triangles can now be lit and textured at the same time!
 
@@ -171,10 +175,18 @@ The changelog is as such:
 * Tuned the transformations to absolute perfection
 
 * Added glDrawArrays
+* Added glDrawElements
+* Added glDepthFunc and line width state tracking
 
 * Added Buffers (For memory management purposes)
 
 * Added glTexImage1D (... it just resizes it to 2D, but it works!)
+* Added glTexSubImage1D/2D and glCopyTexSubImage2D
+* Added glIsEnabled
+* Added glPixelStorei and glPixelStoref
+* Added float variants of glTexEnv and glTexParameter
+* Added glReadPixels for framebuffer capture
+* Optional per-function profiling with `-DTINYGL_ENABLE_PROFILING=ON` and `--profiling` demo flag
 
 * Added glPixelSize (TODO is to implement distance scaling)
 
@@ -197,7 +209,7 @@ boosts performance. Also, implemented GL_FEEDBACK.
 
 
 
-Note that this Softrast **is not GL 1.1 compliant** and does not constitute a complete GL implementation.
+Note that this Softrast **is not GL 1.2 compliant** and does not constitute a complete GL implementation.
 
 You *will* have to tweak your code to work with this library. That said, once you have, it will run anywhere that you can get
 C99. TinyGL has very few external dependencies.
@@ -218,9 +230,9 @@ The "implementation specific multiplier" is 0.
 
 * There is no mipmapping, antialiasing, or any form of texture filtering.
 
-* No edge clamping. S and T are wrapped.
+* Textures now support `GL_CLAMP` and `GL_CLAMP_TO_EDGE` wrapping.
 
-* Display lists can be infinitely nested and doing so will crash TinyGL.
+* Display lists have a recursion limit of 32 calls to avoid stack overflows.
 
 * Lit triangles will use the current material properties, even if they are textured. If the diffuse color is black, then your
 textured triangles will appear black.
@@ -309,7 +321,7 @@ Note that while you... *can* invoke ZB_Resize to resize the framebuffer, you rea
 ### WHAT ARE THE MINIMUM REQUIREMENTS OF THIS LIBRARY?
 
 SDL 1.2 is required to run most of the demos I've written, but if you don't have SDL you can still check out the library
-by compiling one of the "Raw Demos" which write their output to a file (At the time of writing this, only gears has been added.)
+by compiling one of the "Raw_Demos" which write their output to a file (for example `bigfont` or `benchmark`)
 
 SDL is by no means required to compile or use this library.
 SDL is used as a reasonable means of displaying the output of TinyGL for testing.
@@ -331,7 +343,11 @@ There is no FILE* usage, or I/O outside of 'msghandling.c' so if you want to rem
 
 ### Multithreading support
 
-TinyGL uses a small lock-step worker thread to speed up a few heavy operations.
+TinyGL can optionally spin up a small lock-step worker thread to speed up a few
+heavy operations. Pass `-DTINYGL_ENABLE_THREADS=ON` (the default) to CMake to
+enable it or `OFF` for a pure single-thread build. Adjust the number of worker
+threads with `-DTINYGL_NUM_THREADS=<n>` (default 4).
+This approach avoids relying on `stdatomic` operations so TinyGL remains portable even on platforms where C11 atomics are missing or slow.
 
 
 These are the operations that are accelerated by multithreading:
@@ -355,6 +371,13 @@ These are the operations that are accelerated by multithreading:
 You do not need a multicore processor to use TinyGL—the worker thread simply
 helps overlap memory operations.
 
+### Profiling support
+
+Pass `-DTINYGL_ENABLE_PROFILING=ON` when configuring CMake to build TinyGL with
+per‑function profiling hooks. Any demo built with this option accepts a
+`--profiling` flag. When enabled, TinyGL counts each `gl*` call, measures the CPU
+cycles and time spent inside, and prints a summary after exit.
+
 ### Performance Recommendations
 
 ```
@@ -366,7 +389,7 @@ The framerate doubles.
 ```
 ### NEW FUNCTIONS 
 
-These are functions not in the GL 1.1 spec that i've added to make this library more useful.
+These are functions not in the GL 1.2 spec that i've added to make this library more useful.
 
 These functions cannot be added as opcodes to display lists unless specifically listed.
 
@@ -605,6 +628,9 @@ pixel or 32 bit RGBA if needed.
 
 - Fast texture mapping capabilities, with perspective correction and
 texture objects.
+
+- Optional loader for KTX texture files for easy asset import.
+- The file `GL12_FEATURES.md` documents which parts of OpenGL 1.2 are covered.
 
 - 32 bit float only arithmetic.
 

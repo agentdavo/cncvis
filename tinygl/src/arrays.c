@@ -357,6 +357,58 @@ void glDrawArrays(GLenum mode, GLint first, GLsizei count) {
 	glEnd();
 }
 
+void glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices) {
+	glBegin(mode);
+	if (type == GL_UNSIGNED_INT) {
+		const GLuint* idx = indices;
+		for (GLsizei i = 0; i < count; ++i)
+			glArrayElement(idx[i]);
+	} else if (type == GL_UNSIGNED_SHORT) {
+		const GLushort* idx = indices;
+		for (GLsizei i = 0; i < count; ++i)
+			glArrayElement(idx[i]);
+	} else if (type == GL_UNSIGNED_BYTE) {
+		const GLubyte* idx = indices;
+		for (GLsizei i = 0; i < count; ++i)
+			glArrayElement(idx[i]);
+	}
+	glEnd();
+	(void)start;
+	(void)end;
+}
+
+void glDrawElements(GLenum mode, GLsizei count, GLenum type, const void* indices) {
+	GLuint min = 0xffffffff, max = 0;
+	if (type == GL_UNSIGNED_INT) {
+		const GLuint* idx = indices;
+		for (GLsizei i = 0; i < count; ++i) {
+			if (idx[i] < min)
+				min = idx[i];
+			if (idx[i] > max)
+				max = idx[i];
+		}
+	} else if (type == GL_UNSIGNED_SHORT) {
+		const GLushort* idx = indices;
+		for (GLsizei i = 0; i < count; ++i) {
+			if (idx[i] < min)
+				min = idx[i];
+			if (idx[i] > max)
+				max = idx[i];
+		}
+	} else if (type == GL_UNSIGNED_BYTE) {
+		const GLubyte* idx = indices;
+		for (GLsizei i = 0; i < count; ++i) {
+			if (idx[i] < min)
+				min = idx[i];
+			if (idx[i] > max)
+				max = idx[i];
+		}
+	} else {
+		return;
+	}
+	glDrawRangeElements(mode, min, max, count, type, indices);
+}
+
 void glopEnableClientState(GLParam* p) { gl_get_context()->client_states |= p[1].i; }
 
 void glEnableClientState(GLenum array) {

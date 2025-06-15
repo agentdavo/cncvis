@@ -1,0 +1,39 @@
+#ifndef KTX_LOADER_H
+#define KTX_LOADER_H
+
+#include <GL/gl.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef GL_ETC1_RGB8_OES
+#define GL_ETC1_RGB8_OES 0x8D64
+#endif
+#ifndef GL_TEXTURE_CUBE_MAP_OES
+#define GL_TEXTURE_CUBE_MAP_OES 0x8513
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_X_OES 0x8515
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_X_OES 0x8516
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Y_OES 0x8517
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_OES 0x8518
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES 0x8519
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES 0x851A
+#endif
+
+typedef enum {
+  KTX_SUCCESS,
+  KTX_FILE_NOT_FOUND,
+  KTX_INVALID_HEADER,
+  KTX_UNSUPPORTED_TEXTURE_TYPE,
+  KTX_INVALID_METADATA,
+  KTX_INVALID_DATA,
+  KTX_OPENGL_ERROR
+} KTXError;
+
+KTXError load_ktx_texture(const char *filename, GLuint *texture_id);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* KTX_LOADER_H */

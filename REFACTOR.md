@@ -20,7 +20,11 @@ This document tracks progress of the 18-step refactoring plan. The goal is to sp
 |14|Move utilities to `utils.c`|**Completed**|
 |15|Update `zbuffer.c`, `matrix.c`, `memory.c`, `zmath.c`|**Completed**|
 |16|Update build system for new modules|**Completed**|
-|17|Add and run unit tests|Completed (now validated under Valgrind and updated reference image for `diff_gears` test. Added colored and textured rendering tests)|
+|17|Add and run unit tests|Completed (validated under Valgrind with colored and textured rendering tests)|
 |18|Optimize for software rendering|Completed|
 |19|Always use multithreaded paths, remove single-thread code|Completed|
 |20|Merge `chad_math.h` into `zmath` for SIMD-friendly math|Completed|
+|21|Add cube benchmark test comparing threading performance|Completed|
+|22|Implement optional KTX texture loader|Completed|
+|23|Add red KTX sample texture used by gears test|Completed|
+|24|Achieve full OpenGL 1.2 compliance|Completed|
