@@ -1,10 +1,13 @@
 #include "../include/zbuffer.h"
+#include "gl_texture.h"
 #include "gl_utils.h"
 #include "zgl.h"
 #include <math.h>
 #include <stdalign.h>
 #include <stdbool.h>
+#if TGL_ENABLE_THREADS
 #include <threads.h>
+#endif
 
 #include "lockstepthread.h"
 
@@ -22,14 +25,28 @@ typedef struct {
 } RasterJob;
 
 #ifndef NUM_RASTER_THREADS
-#define NUM_RASTER_THREADS 4
+#define NUM_RASTER_THREADS TGL_NUM_THREADS
 #endif
 static c11_lsthread raster_threads[NUM_RASTER_THREADS];
 static RasterJob raster_jobs[NUM_RASTER_THREADS];
 
 static inline float edgef(float ax, float ay, float bx, float by, float cx, float cy) { return (cx - ax) * (by - ay) - (cy - ay) * (bx - ax); }
 
-static inline PIXEL sample_tex(PIXEL* tex, int s, int t) { return *(PIXEL*)((unsigned char*)tex + ST_TO_TEXTURE_BYTE_OFFSET(s, t)); }
+static inline PIXEL sample_tex(ZBuffer* zb, int s, int t) {
+	if (zb->wrap_s == GL_CLAMP || zb->wrap_s == GL_CLAMP_TO_EDGE) {
+		if (s < ZB_POINT_S_MIN)
+			s = ZB_POINT_S_MIN;
+		if (s > ZB_POINT_S_MAX)
+			s = ZB_POINT_S_MAX;
+	}
+	if (zb->wrap_t == GL_CLAMP || zb->wrap_t == GL_CLAMP_TO_EDGE) {
+		if (t < ZB_POINT_T_MIN)
+			t = ZB_POINT_T_MIN;
+		if (t > ZB_POINT_T_MAX)
+			t = ZB_POINT_T_MAX;
+	}
+	return *(PIXEL*)((unsigned char*)zb->current_texture + ST_TO_TEXTURE_BYTE_OFFSET(s, t));
+}
 
 static void raster_job(void* arg) {
 	RasterJob* job = arg;
@@ -58,8 +75,6 @@ static void raster_job(void* arg) {
 	float r1 = p1->r, g1 = p1->g, b1 = p1->b;
 	float r2 = p2->r, g2 = p2->g, b2 = p2->b;
 
-	PIXEL* tex = zb->current_texture;
-
 	for (int y = ymin; y <= ymax; y++) {
 		for (int x = xmin; x <= xmax; x++) {
 			float px = x + 0.5f, py = y + 0.5f;
@@ -74,7 +89,7 @@ static void raster_job(void* arg) {
 				float z = 1.0f / iz;
 				unsigned int zz = (unsigned int)(z / (1 << ZB_POINT_Z_FRAC_BITS));
 				GLushort* pz = zb->zbuf + y * zb->xsize + x;
-				if (!zb->depth_test || zz >= *pz) {
+				if (!zb->depth_test || ZB_depth_test(zb, zz, *pz)) {
 					PIXEL* pp = (PIXEL*)((unsigned char*)zb->pbuf + y * zb->linesize + x * PSZB);
 					PIXEL col;
 					if (job->mode == 0) {
@@ -87,7 +102,7 @@ static void raster_job(void* arg) {
 					} else {
 						float s = (w0 * s0 / z0 + w1 * s1 / z1 + w2 * s2 / z2) * z;
 						float t = (w0 * t0 / z0 + w1 * t1 / z1 + w2 * t2 / z2) * z;
-						PIXEL tpix = sample_tex(tex, (int)s, (int)t);
+						PIXEL tpix = sample_tex(zb, (int)s, (int)t);
 #if TGL_FEATURE_LIT_TEXTURES == 1
 						float r = (w0 * r0 / z0 + w1 * r1 / z1 + w2 * r2 / z2) * z;
 						float g = (w0 * g0 / z0 + w1 * g1 / z1 + w2 * g2 / z2) * z;
@@ -136,7 +151,11 @@ void end_raster_threads(void) {
 	}
 }
 
-void ZB_setTexture(ZBuffer* zb, PIXEL* texture) { zb->current_texture = texture; }
+void ZB_setTexture(ZBuffer* zb, GLTexture* tex) {
+	zb->current_texture = tex ? tex->images[0].pixmap : NULL;
+	zb->wrap_s = tex ? tex->wrap_s : GL_REPEAT;
+	zb->wrap_t = tex ? tex->wrap_t : GL_REPEAT;
+}
 
 static void draw_triangle(ZBuffer* zb, ZBufferPoint* p0, ZBufferPoint* p1, ZBufferPoint* p2, int mode, PIXEL flat) {
 	if (tgl_threads_enabled && zb->ysize > 64) {

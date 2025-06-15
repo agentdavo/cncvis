@@ -14,8 +14,13 @@ int main(void) {
   GLuint tex;
   glGenTextures(1, &tex);
   glBindTexture(GL_TEXTURE_2D, tex);
-  unsigned int pixels[4] = {0xffffffff, 0xff0000ff, 0xff00ff00, 0xffff0000};
-  glTexImage2D(GL_TEXTURE_2D, 0, 4, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+  unsigned char pixels[12] = {
+      0xff, 0xff, 0xff, // white
+      0xff, 0x00, 0x00, // red
+      0x00, 0xff, 0x00, // green
+      0x00, 0x00, 0xff  // blue
+  };
+  glTexImage2D(GL_TEXTURE_2D, 0, 3, 2, 2, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
   glBegin(GL_TRIANGLES);
   glTexCoord2f(0.f, 0.f);

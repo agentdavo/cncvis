@@ -8,6 +8,8 @@
 #include "GL/gl.h"
 #include "zfeatures.h"
 
+struct GLTexture;
+
 #define ZB_Z_BITS 16
 
 #define ZB_POINT_Z_FRAC_BITS 14
@@ -37,11 +39,10 @@
 #define COLOR_MASK 0x00ffffff
 #define COLOR_SHIFT 16
 #define COLOR_R_GET32(r) ((r) & 0xff0000)
-#define COLOR_G_GET32(g) (((g) >> 8) & 0xff00)
-#define COLOR_B_GET32(b) (((b) >> 16) & 0xff)
+#define COLOR_G_GET32(g) ((g) & 0x00ff00)
+#define COLOR_B_GET32(b) ((b) & 0x0000ff)
 
-#define RGB_TO_PIXEL(r, g, b)                                                  \
-  (COLOR_R_GET32(r) | COLOR_G_GET32(g) | COLOR_B_GET32(b))
+#define RGB_TO_PIXEL(r, g, b) ((r) | (g) | (b))
 /*This is how textures are sampled. if you want to do some sort of fancy texture
  * filtering,*/
 /*you do it here.*/
@@ -265,6 +266,8 @@ typedef struct __attribute__((aligned(16))) {
   GLushort *zbuf;
   PIXEL *pbuf;
   PIXEL *current_texture;
+  GLint wrap_s;
+  GLint wrap_t;
 
   /* point size*/
   GLfloat pointsize;
@@ -282,8 +285,33 @@ typedef struct __attribute__((aligned(16))) {
   /* depth */
   GLint depth_test;
   GLint depth_write;
+  GLenum depth_func;
+  /* raster options */
+  GLfloat line_width;
   GLubyte frame_buffer_allocated;
 } ZBuffer;
+
+static inline int ZB_depth_test(const ZBuffer *zb, GLuint z, GLuint zpix) {
+  switch (zb->depth_func) {
+  case GL_NEVER:
+    return 0;
+  case GL_LESS:
+    return z > zpix;
+  case GL_LEQUAL:
+    return z >= zpix;
+  case GL_GREATER:
+    return z < zpix;
+  case GL_GEQUAL:
+    return z <= zpix;
+  case GL_EQUAL:
+    return z == zpix;
+  case GL_NOTEQUAL:
+    return z != zpix;
+  case GL_ALWAYS:
+  default:
+    return 1;
+  }
+}
 
 typedef struct {
   GLint x, y, z; /* integer coordinates in the zbuffer */
@@ -317,7 +345,7 @@ void ZB_line_z(ZBuffer *zb, ZBufferPoint *p1, ZBufferPoint *p2);
 
 /* ztriangle.c */
 
-void ZB_setTexture(ZBuffer *zb, PIXEL *texture);
+void ZB_setTexture(ZBuffer *zb, struct GLTexture *tex);
 
 void ZB_fillTriangleFlat(ZBuffer *zb, ZBufferPoint *p1, ZBufferPoint *p2,
                          ZBufferPoint *p3);

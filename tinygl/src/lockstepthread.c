@@ -1,6 +1,8 @@
 #include "lockstepthread.h"
 #include <stdlib.h>
 
+#if TGL_ENABLE_THREADS
+
 static void barrier_wait(c11_lsthread* t) {
 	mtx_lock(&t->barrier.m);
 	t->barrier.waiting++;
@@ -90,3 +92,5 @@ void kill_c11_lsthread(c11_lsthread* t) {
 	t->isThreadLive = false;
 	t->shouldKillThread = false;
 }
+
+#endif /* TGL_ENABLE_THREADS */

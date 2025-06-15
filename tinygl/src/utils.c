@@ -122,3 +122,73 @@ void glDebug(GLint mode) {
 #include "error_check.h"
 	c->print_flag = mode;
 }
+
+void glGetIntegerv(GLint pname, GLint* params) {
+	GLContext* c = gl_get_context();
+	switch (pname) {
+	case GL_VIEWPORT:
+		params[0] = c->viewport.xmin;
+		params[1] = c->viewport.ymin;
+		params[2] = c->viewport.xsize;
+		params[3] = c->viewport.ysize;
+		break;
+	case GL_MAX_MODELVIEW_STACK_DEPTH:
+		*params = MAX_MODELVIEW_STACK_DEPTH;
+		break;
+	case GL_MAX_PROJECTION_STACK_DEPTH:
+		*params = MAX_PROJECTION_STACK_DEPTH;
+		break;
+	case GL_MAX_TEXTURE_STACK_DEPTH:
+		*params = MAX_TEXTURE_STACK_DEPTH;
+		break;
+	case GL_MAX_LIGHTS:
+		*params = MAX_LIGHTS;
+		break;
+	case GL_MAX_TEXTURE_SIZE:
+		*params = TGL_FEATURE_TEXTURE_DIM;
+		break;
+	case GL_POINT_SIZE:
+		*params = (GLint)c->zb->pointsize;
+		break;
+	default:
+		break;
+	}
+}
+
+void glGetFloatv(GLint pname, GLfloat* v) {
+	GLContext* c = gl_get_context();
+	switch (pname) {
+	case GL_TEXTURE_MATRIX:
+		memcpy(v, c->matrix_stack_ptr[2], sizeof(M4));
+		break;
+	case GL_PROJECTION_MATRIX:
+		memcpy(v, c->matrix_stack_ptr[1], sizeof(M4));
+		break;
+	case GL_MODELVIEW_MATRIX:
+		memcpy(v, c->matrix_stack_ptr[0], sizeof(M4));
+		break;
+	case GL_POINT_SIZE:
+		*v = c->zb->pointsize;
+		break;
+	default:
+		break;
+	}
+}
+
+void glPixelStorei(GLint pname, GLint param) {
+	GLContext* c = gl_get_context();
+	switch (pname) {
+	case GL_UNPACK_ALIGNMENT:
+		if (param == 1 || param == 2 || param == 4 || param == 8)
+			c->unpack_alignment = param;
+		break;
+	case GL_PACK_ALIGNMENT:
+		if (param == 1 || param == 2 || param == 4 || param == 8)
+			c->pack_alignment = param;
+		break;
+	default:
+		break;
+	}
+}
+
+void glPixelStoref(GLint pname, GLfloat param) { glPixelStorei(pname, (GLint)param); }

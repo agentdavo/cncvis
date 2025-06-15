@@ -827,6 +827,8 @@ void glReadBuffer(GLenum mode);
 void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                   GLenum format, GLenum type, void *data);
 void glDrawArrays(GLenum mode, GLint first, GLsizei count);
+void glDrawElements(GLenum mode, GLsizei count, GLenum type,
+                    const void *indices);
 
 #include "tinygl_ext.h" /* TinyGL specific helper functions */
 
@@ -939,8 +941,20 @@ void glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat,
                       GLint x, GLint y, GLsizei width, GLsizei height,
                       GLint border);
 void glTexEnvi(GLint target, GLint pname, GLint param);
+void glTexEnvf(GLint target, GLint pname, GLfloat param);
+void glTexEnvfv(GLint target, GLint pname, const GLfloat *params);
 
 void glTexParameteri(GLint target, GLint pname, GLint param);
+void glTexParameterf(GLint target, GLint pname, GLfloat param);
+void glTexParameterfv(GLint target, GLint pname, const GLfloat *params);
+void glTexSubImage1D(GLint target, GLint level, GLint xoffset, GLsizei width,
+                     GLint format, GLint type, const void *pixels);
+void glTexSubImage2D(GLint target, GLint level, GLint xoffset, GLint yoffset,
+                     GLsizei width, GLsizei height, GLint format, GLint type,
+                     const void *pixels);
+void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset,
+                         GLint yoffset, GLint x, GLint y, GLsizei width,
+                         GLsizei height);
 
 /* OpenGL 1.2 functions */
 void glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
@@ -1039,6 +1053,7 @@ void glGetFloatv(GLint pname, GLfloat *v);
 const GLubyte *glGetString(GLenum name);
 GLenum glGetError();
 void glFrontFace(GLint mode);
+GLboolean glIsEnabled(GLenum cap);
 
 /* opengl 1.2 arrays */
 void glEnableClientState(GLenum array);
@@ -1082,17 +1097,17 @@ void glRasterPos4fv(GLfloat *v);
 void glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type,
                   void *data);
 void glPixelZoom(GLfloat x, GLfloat y);
+void glPixelStorei(GLint pname, GLint param);
+void glPixelStoref(GLint pname, GLfloat param);
 
 /* PostProcessing pass implementation */
 void glPostProcess(GLuint (*postprocess)(GLint x, GLint y, GLuint pixel,
                                          GLushort z));
+void glLineWidth(GLfloat);
+void glDepthFunc(GLenum);
+
 /* not implemented, just added to compile  */
 /*
-
-
-inline void glLineWidth(GLfloat) {}
-inline void glDepthFunc(GLint) {}
-
 inline void glTexEnvf(GLint, GLint, GLint) {}
 inline void glVertex2i(GLint,GLint) {}
 inline void glDepthMask(GLint) {}
