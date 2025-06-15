@@ -8,31 +8,48 @@
 #include "../src/gl_vertex.h"
 #include <stdio.h>
 
+static FILE *log_file;
+
+#define LOGF(fmt, ...) fprintf(log_file, fmt, __VA_ARGS__)
+
 #define CHECK(call)                                                            \
   do {                                                                         \
     call;                                                                      \
     GLenum e = glGetError();                                                   \
     if (e != GL_NO_ERROR) {                                                    \
-      printf("%s -> %d\n", #call, e);                                          \
+      LOGF("%s -> %d\n", #call, e);                                            \
       failures++;                                                              \
     }                                                                          \
   } while (0)
 
-int main(void) {
-  ZBuffer *zb = ZB_open(32, 32, ZB_MODE_RGBA, 0);
-  if (!zb)
+static int run_case(const char *logpath, int threads) {
+  log_file = fopen(logpath, "w");
+  if (!log_file)
     return 1;
+  tgl_threads_enabled = threads;
+
+  ZBuffer *zb = ZB_open(32, 32, ZB_MODE_RGBA, 0);
+  if (!zb) {
+    fprintf(log_file, "ZB_open failed\n");
+    fclose(log_file);
+    return 1;
+  }
   glInit(zb);
 
   int failures = 0;
 
   (void)glGetString(GL_VERSION);
   CHECK(glGetError());
-
   GLint iv[4];
   CHECK(glGetIntegerv(GL_VIEWPORT, iv));
   GLfloat fv[16];
   CHECK(glGetFloatv(GL_MODELVIEW_MATRIX, fv));
+
+  CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
+  CHECK(glPixelStoref(GL_PACK_ALIGNMENT, 4.f));
+
+  (void)glIsEnabled(GL_DEPTH_TEST);
+  CHECK(glGetError());
 
   CHECK(glEnable(GL_DEPTH_TEST));
   CHECK(glDisable(GL_LIGHTING));
@@ -90,6 +107,7 @@ int main(void) {
   CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
   GLuint indices[3] = {0, 1, 2};
   CHECK(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, indices));
+  CHECK(glDrawRangeElements(GL_TRIANGLES, 0, 2, 3, GL_UNSIGNED_INT, indices));
 
   GLuint texid;
   CHECK(glGenTextures(1, &texid));
@@ -97,6 +115,7 @@ int main(void) {
   const int dim = TGL_FEATURE_TEXTURE_DIM;
   GLubyte *pixels = malloc(dim * dim * 3);
   if (!pixels) {
+    fclose(log_file);
     return 1;
   }
   memset(pixels, 255, dim * dim * 3);
@@ -106,6 +125,8 @@ int main(void) {
                         GL_UNSIGNED_BYTE, pixels));
   CHECK(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
   CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+  CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP));
+  CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
   CHECK(glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE));
   CHECK(glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE));
   CHECK(glDeleteTextures(1, &texid));
@@ -136,8 +157,13 @@ int main(void) {
 
   glClose();
   ZB_close(zb);
-  if (failures) {
-    printf("Failures: %d\n", failures);
-  }
+  LOGF("Failures: %d\n", failures);
+  fclose(log_file);
   return failures ? 1 : 0;
+}
+
+int main(void) {
+  int ret1 = run_case("full_gl_with_thread.log", 1);
+  int ret2 = run_case("full_gl_without_thread.log", 0);
+  return ret1 || ret2;
 }

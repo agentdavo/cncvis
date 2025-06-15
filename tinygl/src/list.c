@@ -183,6 +183,9 @@ void glopEndList(GLParam* p) { exit(1); }
 /* this opcode is never called directly */
 void glopNextBuffer(GLParam* p) { exit(1); }
 
+static int call_depth = 0;
+#define MAX_CALL_DEPTH 32
+
 void glopCallList(GLParam* p) {
 
 	GLList* l;
@@ -198,6 +201,9 @@ void glopCallList(GLParam* p) {
 #else
 
 #endif
+	if (call_depth >= MAX_CALL_DEPTH)
+		return;
+	call_depth++;
 	p = l->first_op_buffer->ops;
 
 	while (1) {
@@ -218,6 +224,7 @@ void glopCallList(GLParam* p) {
 			p += op_table_size[op];
 		}
 	}
+	call_depth--;
 }
 
 void glNewList(GLuint list, GLint mode) {

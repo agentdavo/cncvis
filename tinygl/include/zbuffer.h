@@ -8,6 +8,8 @@
 #include "GL/gl.h"
 #include "zfeatures.h"
 
+struct GLTexture;
+
 #define ZB_Z_BITS 16
 
 #define ZB_POINT_Z_FRAC_BITS 14
@@ -264,6 +266,8 @@ typedef struct __attribute__((aligned(16))) {
   GLushort *zbuf;
   PIXEL *pbuf;
   PIXEL *current_texture;
+  GLint wrap_s;
+  GLint wrap_t;
 
   /* point size*/
   GLfloat pointsize;
@@ -341,7 +345,7 @@ void ZB_line_z(ZBuffer *zb, ZBufferPoint *p1, ZBufferPoint *p2);
 
 /* ztriangle.c */
 
-void ZB_setTexture(ZBuffer *zb, PIXEL *texture);
+void ZB_setTexture(ZBuffer *zb, struct GLTexture *tex);
 
 void ZB_fillTriangleFlat(ZBuffer *zb, ZBufferPoint *p1, ZBufferPoint *p2,
                          ZBufferPoint *p3);
