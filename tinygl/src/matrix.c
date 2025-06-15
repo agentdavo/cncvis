@@ -273,7 +273,7 @@ void glopFrustum(GLParam* p) {
 
 	gl_M4_MulLeft(c->matrix_stack_ptr[c->matrix_mode], &m);
 
-	gl_matrix_update(c);
+	gl_matrix_update();
 }
 
 /* thanks mesa */
@@ -316,5 +316,5 @@ void glopOrtho(GLParam* p) {
 #undef M
 
 	gl_M4_MulLeft(c->matrix_stack_ptr[c->matrix_mode], (M4*)m);
-	gl_matrix_update(c);
+	gl_matrix_update();
 }
