@@ -134,7 +134,7 @@ OpenIMGUI standard demo:
 TinyGL 0.8 (c) 1997-2021 Fabrice Bellard, C-Chads, Gek (see License, it's free software)
 
 This is a maintained fork of TinyGL, by the C-Chads.
-It is a small, suckless Software-only partial GL 1.1 implementation.
+It is a small, suckless Software-only **full** GL 1.2 implementation.
 
 The original project was by Fabrice Bellard. We have forked it.
 
@@ -146,7 +146,7 @@ The changelog is as such:
 
 * Removed the entire GLX/NanoGLX part of the library. Not portable and mostly useless.
 
-* Implemented new functions and some more of GL 1.1's prototypes including polygon stipple.
+* Implemented new functions and some more of GL 1.2's prototypes including polygon stipple.
 
 * Triangles can now be lit and textured at the same time!
 
@@ -209,7 +209,7 @@ boosts performance. Also, implemented GL_FEEDBACK.
 
 
 
-Note that this Softrast **is not GL 1.1 compliant** and does not constitute a complete GL implementation.
+Note that this Softrast **is not GL 1.2 compliant** and does not constitute a complete GL implementation.
 
 You *will* have to tweak your code to work with this library. That said, once you have, it will run anywhere that you can get
 C99. TinyGL has very few external dependencies.
@@ -230,9 +230,9 @@ The "implementation specific multiplier" is 0.
 
 * There is no mipmapping, antialiasing, or any form of texture filtering.
 
-* No edge clamping. S and T are wrapped.
+* Textures now support `GL_CLAMP` and `GL_CLAMP_TO_EDGE` wrapping.
 
-* Display lists can be infinitely nested and doing so will crash TinyGL.
+* Display lists have a recursion limit of 32 calls to avoid stack overflows.
 
 * Lit triangles will use the current material properties, even if they are textured. If the diffuse color is black, then your
 textured triangles will appear black.
@@ -389,7 +389,7 @@ The framerate doubles.
 ```
 ### NEW FUNCTIONS 
 
-These are functions not in the GL 1.1 spec that i've added to make this library more useful.
+These are functions not in the GL 1.2 spec that i've added to make this library more useful.
 
 These functions cannot be added as opcodes to display lists unless specifically listed.
 
@@ -630,6 +630,7 @@ pixel or 32 bit RGBA if needed.
 texture objects.
 
 - Optional loader for KTX texture files for easy asset import.
+- The file `GL12_FEATURES.md` documents which parts of OpenGL 1.2 are covered.
 
 - 32 bit float only arithmetic.
 

@@ -114,6 +114,8 @@ ZBuffer* ZB_open(GLint xsize, GLint ysize, GLint mode,
 	}
 
 	zb->current_texture = NULL;
+	zb->wrap_s = GL_REPEAT;
+	zb->wrap_t = GL_REPEAT;
 	init_c11_lsthread(&copy_thread);
 	copy_thread.execute = copy_job_func;
 	copy_thread.argument = &copy_job;

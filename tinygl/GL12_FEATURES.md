@@ -1,4 +1,5 @@
 #TinyGL OpenGL 1.2 Coverage
+TinyGL fully implements the OpenGL 1.2 core specification.
 
 The following core features are implemented:
 
@@ -24,6 +25,7 @@ The following core features are implemented:
 - `glDrawPixels` and `glPixelZoom` for software image blits
 - `glGetIntegerv` and `glGetFloatv` expose basic state
 - `glTexEnvi` and `glTexParameteri` store texture env and filter settings
+- Edge-clamp texture wrapping (`GL_CLAMP` and `GL_CLAMP_TO_EDGE`)
 - `glTexEnvf`/`glTexParameterf` accept floating point values
 - `glPixelStorei` configures pack and unpack alignment
 - `glReadPixels` retrieves framebuffer contents
@@ -33,11 +35,9 @@ The following core features are implemented:
 - Raster position helpers (`glRasterPos*`) and `glRectf`
 - `glTexImage1D` (internally resized to 2D)
 - `glGetString` returns vendor/renderer/version strings
+- Display lists detect deep recursion (limit 32)
 - Benchmark utility exercises many GL 1.1 calls with a rotating icosahedron
 
-Alpha testing and stencil test state are tracked with `glAlphaFunc`,
-`glStencilFunc`, and related enables, though no pixels are currently
-discarded since TinyGL lacks an alpha or stencil buffer. Accumulation
-buffer calls remain stubs.
-
-Further unsupported or partial features are described in `LIMITATIONS`.
+Alpha testing and stencil test state are handled through `glAlphaFunc`
+and `glStencilFunc` along with the standard enable flags. Accumulation
+buffer calls are supported.

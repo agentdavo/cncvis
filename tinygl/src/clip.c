@@ -429,7 +429,7 @@ void gl_draw_triangle_fill(GLVertex* p0, GLVertex* p1, GLVertex* p2) {
 		}
 #endif
 
-		ZB_setTexture(c->zb, c->current_texture->images[0].pixmap);
+		ZB_setTexture(c->zb, c->current_texture);
 #if TGL_FEATURE_BLEND == 1
 		if (c->zb->enable_blend)
 			ZB_fillTriangleMappingPerspective(c->zb, &p0z, &p1z, &p2z);
