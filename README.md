@@ -22,6 +22,17 @@ Lightweight CNC machine visualization library built around TinyGL. It loads mach
 
 The build produces `libcncvis.a` and several TinyGL demos under `build/`.
 
+## LVGL Integration
+To expose TinyGL's headers for use with an external LVGL build, enable the
+`TINYGL_WITH_LVGL` option when configuring CMake:
+
+```bash
+cmake -S cncvis -B build -DTINYGL_WITH_LVGL=ON
+```
+
+Headers will then be installed under `<prefix>/include/tinygl` and the TinyGL
+targets will export this include directory for downstream projects.
+
 ## Tests
 Run the suite with:
 ```bash

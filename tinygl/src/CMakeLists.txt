@@ -37,7 +37,13 @@ endif()
 
 if(TINYGL_BUILD_SHARED)
   add_library(tinygl SHARED ${tinygl_srcs})
-  target_include_directories(tinygl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  if(TINYGL_WITH_LVGL)
+    target_include_directories(tinygl PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+      $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>)
+  else()
+    target_include_directories(tinygl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  endif()
   install(TARGETS tinygl
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
@@ -58,7 +64,13 @@ endif(TINYGL_BUILD_SHARED)
 
 if(TINYGL_BUILD_STATIC)
   add_library(tinygl-static STATIC ${tinygl_srcs})
-  target_include_directories(tinygl-static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  if(TINYGL_WITH_LVGL)
+    target_include_directories(tinygl-static PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+      $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>)
+  else()
+    target_include_directories(tinygl-static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  endif()
   install(TARGETS tinygl-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
@@ -79,7 +91,13 @@ endif(TINYGL_BUILD_STATIC)
 
 if(TINYGL_BUILD_DEBUG)
   add_library(tinygl-debug STATIC ${tinygl_srcs})
-  target_include_directories(tinygl-debug PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  if(TINYGL_WITH_LVGL)
+    target_include_directories(tinygl-debug PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+      $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>)
+  else()
+    target_include_directories(tinygl-debug PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  endif()
   if(NOT MSVC)
     target_compile_options(tinygl-debug PRIVATE -O0 -g -pedantic -Wall -Wextra)
     if(NOT CMAKE_CROSSCOMPILING)
