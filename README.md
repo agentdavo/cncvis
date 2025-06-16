@@ -35,7 +35,7 @@ Unit tests cover common OpenGL calls, BGR uploads, draw range/element helpers, a
 - Optional lock-step worker thread controlled by `TINYGL_ENABLE_THREADS`
 - KTX texture loader for loading compressed assets
 - Additional unit tests including a comprehensive GL feature check
-- Full OpenGL 1.2 core compliance
+- Partial OpenGL 1.2 core coverage. See `tinygl/GL12_FEATURES.md` for details
 
 ## License
 MIT. See `LICENSE` for details.

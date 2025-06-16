@@ -134,7 +134,7 @@ OpenIMGUI standard demo:
 TinyGL 0.8 (c) 1997-2021 Fabrice Bellard, C-Chads, Gek (see License, it's free software)
 
 This is a maintained fork of TinyGL, by the C-Chads.
-It is a small, suckless Software-only **full** GL 1.2 implementation.
+It is a small, suckless software renderer implementing a subset of the OpenGL 1.2 core profile.
 
 The original project was by Fabrice Bellard. We have forked it.
 
@@ -209,7 +209,7 @@ boosts performance. Also, implemented GL_FEEDBACK.
 
 
 
-Note that this Softrast **is not GL 1.2 compliant** and does not constitute a complete GL implementation.
+Note that this Softrast is not fully GL 1.2 compliant and does not constitute a complete GL implementation.
 
 You *will* have to tweak your code to work with this library. That said, once you have, it will run anywhere that you can get
 C99. TinyGL has very few external dependencies.
