@@ -5,5 +5,5 @@ set(zhdrs
     ktx_loader.h
 )
 
-install(FILES ${zhdrs} DESTINATION ${INCLUDE_DIR})
-install(FILES GL/gl.h GL/tinygl_ext.h DESTINATION ${INCLUDE_DIR}/TGL)
+install(FILES ${zhdrs} DESTINATION ${INSTALL_INCLUDE_DIR})
+install(FILES GL/gl.h GL/tinygl_ext.h DESTINATION ${INSTALL_INCLUDE_DIR}/TGL)
