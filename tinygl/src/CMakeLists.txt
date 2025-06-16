@@ -27,6 +27,10 @@ set(tinygl_srcs
   ktx_loader.c
   )
 
+if(TINYGL_WITH_LVGL)
+  list(APPEND tinygl_srcs lvgl_bridge.c)
+endif()
+
 if(TINYGL_ENABLE_THREADS)
   list(APPEND tinygl_srcs lockstepthread.c)
 endif()
@@ -60,6 +64,7 @@ if(TINYGL_BUILD_SHARED)
   target_compile_definitions(tinygl PUBLIC TGL_ENABLE_THREADS=$<BOOL:${TINYGL_ENABLE_THREADS}>)
   target_compile_definitions(tinygl PUBLIC TGL_NUM_THREADS=${TINYGL_NUM_THREADS})
   target_compile_definitions(tinygl PUBLIC TGL_FEATURE_PROFILING=$<BOOL:${TINYGL_ENABLE_PROFILING}>)
+  target_compile_definitions(tinygl PUBLIC TINYGL_WITH_LVGL=$<BOOL:${TINYGL_WITH_LVGL}>)
 endif(TINYGL_BUILD_SHARED)
 
 if(TINYGL_BUILD_STATIC)
@@ -87,6 +92,7 @@ if(TINYGL_BUILD_STATIC)
   target_compile_definitions(tinygl-static PUBLIC TGL_ENABLE_THREADS=$<BOOL:${TINYGL_ENABLE_THREADS}>)
   target_compile_definitions(tinygl-static PUBLIC TGL_NUM_THREADS=${TINYGL_NUM_THREADS})
   target_compile_definitions(tinygl-static PUBLIC TGL_FEATURE_PROFILING=$<BOOL:${TINYGL_ENABLE_PROFILING}>)
+  target_compile_definitions(tinygl-static PUBLIC TINYGL_WITH_LVGL=$<BOOL:${TINYGL_WITH_LVGL}>)
 endif(TINYGL_BUILD_STATIC)
 
 if(TINYGL_BUILD_DEBUG)
@@ -110,6 +116,7 @@ if(TINYGL_BUILD_DEBUG)
   target_compile_definitions(tinygl-debug PUBLIC TGL_ENABLE_THREADS=$<BOOL:${TINYGL_ENABLE_THREADS}>)
   target_compile_definitions(tinygl-debug PUBLIC TGL_NUM_THREADS=${TINYGL_NUM_THREADS})
   target_compile_definitions(tinygl-debug PUBLIC TGL_FEATURE_PROFILING=$<BOOL:${TINYGL_ENABLE_PROFILING}>)
+  target_compile_definitions(tinygl-debug PUBLIC TINYGL_WITH_LVGL=$<BOOL:${TINYGL_WITH_LVGL}>)
 endif()
 
 # Local Variables:

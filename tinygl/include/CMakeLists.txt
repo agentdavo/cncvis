@@ -3,6 +3,7 @@ set(zhdrs
     zfeatures.h
     tinygl_api.h
     ktx_loader.h
+    lvgl_bridge.h
 )
 
 install(FILES ${zhdrs} DESTINATION ${INSTALL_INCLUDE_DIR})
