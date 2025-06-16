@@ -37,6 +37,7 @@ option(TINYGL_BUILD_DEBUG "Build Debug Library" OFF)
 option(TINYGL_ENABLE_THREADS "Enable worker thread optimizations" ON)
 set(TINYGL_NUM_THREADS "4" CACHE STRING "Number of worker threads")
 option(TINYGL_ENABLE_PROFILING "Enable TinyGL function profiling" OFF)
+option(TINYGL_BUILD_TESTS "Build unit tests and benchmarks" ON)
 
 # Build main library
 add_subdirectory(src)
@@ -46,8 +47,6 @@ add_subdirectory(include)
 
 # Examples
 if(TINYGL_BUILD_EXAMPLES)
-
-  enable_testing()
 
   # These deliberately do not depend on SDL.  TODO - these could be used to
   # drive a "make test" system to check the correct functioning of the library
@@ -59,7 +58,10 @@ if(TINYGL_BUILD_EXAMPLES)
 endif()
 
 # Unit tests
-add_subdirectory(tests)
+if(TINYGL_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
 
 # Local Variables:
 # tab-width: 8

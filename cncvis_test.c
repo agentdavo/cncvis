@@ -37,8 +37,12 @@ static void test_init_and_motion(void) {
 
   ucncAssembly *link1 = findAssemblyByName(globalScene, "link1");
   assert(link1 != NULL);
+  printf("Limits: %f %f\n", link1->minRot, link1->maxRot);
   float prev_rot = link1->rotationZ;
-  ucncUpdateMotionByName("link1", 5.0f);
+  int mrc = ucncUpdateMotionByName("link1", 5.0f);
+  printf("mrc=%d\n", mrc);
+  printf("rotZ=%f\n", link1->rotationZ);
+  assert(mrc == 0);
   assert(link1->rotationZ == prev_rot + 5.0f);
 
   cncvis_render();
@@ -57,6 +61,19 @@ static void test_reload_config(void) {
   assert(rc == 0);
   rc = ucncLoadNewConfiguration("machines/meca500/config.xml");
   assert(rc == 0);
+  cncvis_cleanup();
+}
+
+static void test_limits(void) {
+  int rc = cncvis_init("machines/meca500/config.xml");
+  assert(rc == 0);
+  ucncAssembly *link1 = findAssemblyByName(globalScene, "link1");
+  assert(link1 != NULL);
+  int res = ucncUpdateMotionByName("link1", 200.0f);
+  assert(res == -1);
+  assert(link1->limitTriggered == 1);
+  ucncClearLimitWarning("link1");
+  assert(link1->limitTriggered == 0);
   cncvis_cleanup();
 }
 
@@ -147,6 +164,7 @@ static void test_benchmark(void) {
 int main(void) {
   test_init_and_motion();
   test_reload_config();
+  test_limits();
   test_orbit_video();
   test_benchmark();
   return 0;

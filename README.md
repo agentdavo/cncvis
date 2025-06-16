@@ -29,6 +29,20 @@ ctest --test-dir build --output-on-failure
 ```
 Unit tests cover common OpenGL calls, BGR uploads, draw range/element helpers, and basic rendering benchmarks.
 
+## Configuration
+Assemblies may define motion limits inside the `<limits>` element:
+
+```xml
+<limits>
+  <linear min="0" max="100"/>
+  <rotary min="-90" max="90"/>
+</limits>
+```
+
+When a limit is exceeded by more than 1 unit, `ucncUpdateMotion` returns `-1`
+and the assembly's `limitTriggered` flag becomes `1`. Use
+`ucncClearLimitWarning("assembly")` to reset this state.
+
 ## Recent Changes
 - BGR/BGRA texture upload and readback
 - `glDrawRangeElements`, `glDrawElements` and depth function support
@@ -36,6 +50,7 @@ Unit tests cover common OpenGL calls, BGR uploads, draw range/element helpers, a
 - KTX texture loader for loading compressed assets
 - Additional unit tests including a comprehensive GL feature check
 - Full OpenGL 1.2 core compliance
+- Motion limit enforcement and `ucncClearLimitWarning` API
 
 ## License
 MIT. See `LICENSE` for details.

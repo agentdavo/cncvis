@@ -28,3 +28,4 @@ This document tracks progress of the 18-step refactoring plan. The goal is to sp
 |22|Implement optional KTX texture loader|Completed|
 |23|Add red KTX sample texture used by gears test|Completed|
 |24|Achieve full OpenGL 1.2 compliance|Completed|
+|25|Add option to disable TinyGL tests (`TINYGL_BUILD_TESTS`)|Completed|
