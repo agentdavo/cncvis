@@ -35,7 +35,7 @@ option(TINYGL_BUILD_SHARED "Build Shared Library" ON)
 option(TINYGL_BUILD_STATIC "Build Static Library" ON)
 option(TINYGL_BUILD_DEBUG "Build Debug Library" OFF)
 option(TINYGL_ENABLE_THREADS "Enable worker thread optimizations" ON)
-set(TINYGL_NUM_THREADS "4" CACHE STRING "Number of worker threads")
+set(TINYGL_NUM_THREADS "8" CACHE STRING "Number of worker threads")
 option(TINYGL_ENABLE_PROFILING "Enable TinyGL function profiling" OFF)
 option(TINYGL_BUILD_TESTS "Build unit tests and benchmarks" ON)
 

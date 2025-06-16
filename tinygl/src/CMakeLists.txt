@@ -27,6 +27,10 @@ set(tinygl_srcs
   ktx_loader.c
   )
 
+if(TINYGL_WITH_LVGL)
+  list(APPEND tinygl_srcs lvgl_bridge.c)
+endif()
+
 if(TINYGL_ENABLE_THREADS)
   list(APPEND tinygl_srcs lockstepthread.c)
 endif()
@@ -37,7 +41,13 @@ endif()
 
 if(TINYGL_BUILD_SHARED)
   add_library(tinygl SHARED ${tinygl_srcs})
-  target_include_directories(tinygl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  if(TINYGL_WITH_LVGL)
+    target_include_directories(tinygl PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+      $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>)
+  else()
+    target_include_directories(tinygl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  endif()
   install(TARGETS tinygl
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
@@ -54,11 +64,18 @@ if(TINYGL_BUILD_SHARED)
   target_compile_definitions(tinygl PUBLIC TGL_ENABLE_THREADS=$<BOOL:${TINYGL_ENABLE_THREADS}>)
   target_compile_definitions(tinygl PUBLIC TGL_NUM_THREADS=${TINYGL_NUM_THREADS})
   target_compile_definitions(tinygl PUBLIC TGL_FEATURE_PROFILING=$<BOOL:${TINYGL_ENABLE_PROFILING}>)
+  target_compile_definitions(tinygl PUBLIC TINYGL_WITH_LVGL=$<BOOL:${TINYGL_WITH_LVGL}>)
 endif(TINYGL_BUILD_SHARED)
 
 if(TINYGL_BUILD_STATIC)
   add_library(tinygl-static STATIC ${tinygl_srcs})
-  target_include_directories(tinygl-static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  if(TINYGL_WITH_LVGL)
+    target_include_directories(tinygl-static PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+      $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>)
+  else()
+    target_include_directories(tinygl-static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  endif()
   install(TARGETS tinygl-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
@@ -75,11 +92,18 @@ if(TINYGL_BUILD_STATIC)
   target_compile_definitions(tinygl-static PUBLIC TGL_ENABLE_THREADS=$<BOOL:${TINYGL_ENABLE_THREADS}>)
   target_compile_definitions(tinygl-static PUBLIC TGL_NUM_THREADS=${TINYGL_NUM_THREADS})
   target_compile_definitions(tinygl-static PUBLIC TGL_FEATURE_PROFILING=$<BOOL:${TINYGL_ENABLE_PROFILING}>)
+  target_compile_definitions(tinygl-static PUBLIC TINYGL_WITH_LVGL=$<BOOL:${TINYGL_WITH_LVGL}>)
 endif(TINYGL_BUILD_STATIC)
 
 if(TINYGL_BUILD_DEBUG)
   add_library(tinygl-debug STATIC ${tinygl_srcs})
-  target_include_directories(tinygl-debug PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  if(TINYGL_WITH_LVGL)
+    target_include_directories(tinygl-debug PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+      $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>)
+  else()
+    target_include_directories(tinygl-debug PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+  endif()
   if(NOT MSVC)
     target_compile_options(tinygl-debug PRIVATE -O0 -g -pedantic -Wall -Wextra)
     if(NOT CMAKE_CROSSCOMPILING)
@@ -92,6 +116,7 @@ if(TINYGL_BUILD_DEBUG)
   target_compile_definitions(tinygl-debug PUBLIC TGL_ENABLE_THREADS=$<BOOL:${TINYGL_ENABLE_THREADS}>)
   target_compile_definitions(tinygl-debug PUBLIC TGL_NUM_THREADS=${TINYGL_NUM_THREADS})
   target_compile_definitions(tinygl-debug PUBLIC TGL_FEATURE_PROFILING=$<BOOL:${TINYGL_ENABLE_PROFILING}>)
+  target_compile_definitions(tinygl-debug PUBLIC TINYGL_WITH_LVGL=$<BOOL:${TINYGL_WITH_LVGL}>)
 endif()
 
 # Local Variables:
