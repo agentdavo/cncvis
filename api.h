@@ -23,9 +23,10 @@ extern ucncLight **globalLights;
 extern int globalLightCount;
 
 // Motion and scene control functions
-void ucncUpdateMotionByName(const char *assemblyName, float value);
+int ucncUpdateMotionByName(const char *assemblyName, float value);
 void ucncSetAllAssembliesToHome(ucncAssembly *assembly);
-void ucncUpdateMotion(ucncAssembly *assembly, float value);
+int ucncUpdateMotion(ucncAssembly *assembly, float value);
+int ucncClearLimitWarning(const char *assemblyName);
 
 // Z-buffer handling
 void ucncSetZBufferDimensions(int width, int height);

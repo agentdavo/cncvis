@@ -44,6 +44,8 @@ target_include_directories(cncvis PRIVATE
 # =============================================================================
 
 # Add TinyGL subdirectory
+set(TINYGL_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(TINYGL_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(tinygl)
 
 # Add STLIO subdirectory

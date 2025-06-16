@@ -18,6 +18,9 @@
       <rotation x="0.0" y="0.0" z="0.0"/>
       <color r="0.8" g="0.8" b="0.8"/>
       <motion type="rotational" axis="Z" invert="no"/>
+      <limits>
+        <rotary min="-45" max="45"/>
+      </limits>
       <home>
         <position x="0.0" y="0.0" z="0.0"/>
         <rotation x="0.0" y="0.0" z="0.0"/>
@@ -29,6 +32,9 @@
       <rotation x="0.0" y="0.0" z="0.0"/>
       <color r="0.6" g="0.6" b="0.6"/>
       <motion type="rotational" axis="Z" invert="no"/>
+      <limits>
+        <rotary min="-180" max="180"/>
+      </limits>
       <home>
         <position x="0.0" y="0.0" z="0.0"/>
         <rotation x="0.0" y="0.0" z="0.0"/>
