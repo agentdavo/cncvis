@@ -19,19 +19,25 @@ Lightweight CNC machine visualization library built around TinyGL. It loads mach
    - `-DTINYGL_BUILD_DEBUG=ON` builds an unoptimised TinyGL library
    - `-DTINYGL_ENABLE_THREADS=OFF` disables the helper worker thread
    - `-DTINYGL_NUM_THREADS=<n>` controls worker count
+   - `-DTINYGL_WITH_LVGL=ON` builds LVGL helpers including `tgl_to_lvgl()`
 
 The build produces `libcncvis.a` and several TinyGL demos under `build/`.
 
 ## LVGL Integration
-To expose TinyGL's headers for use with an external LVGL build, enable the
-`TINYGL_WITH_LVGL` option when configuring CMake:
+
+Compile TinyGL with LVGL support enabled:
 
 ```bash
 cmake -S cncvis -B build -DTINYGL_WITH_LVGL=ON
+cmake --build build
 ```
 
-Headers will then be installed under `<prefix>/include/tinygl` and the TinyGL
-targets will export this include directory for downstream projects.
+In your LVGL display driver's flush callback, call `tgl_to_lvgl()` after rendering
+to copy the TinyGL framebuffer into the LVGL draw buffer.  Link your application
+against the TinyGL library produced in `build/lib`.
+
+TinyGL's LVGL bridge works with 16‑bit RGB565 and 32‑bit ARGB8888 color buffers.
+Other formats are unsupported.
 
 ## Tests
 Run the suite with:
